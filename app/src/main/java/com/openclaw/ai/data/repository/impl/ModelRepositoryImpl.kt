@@ -1,19 +1,16 @@
 package com.openclaw.ai.data.repository.impl
 
 import android.content.Context
-import com.openclaw.ai.data.model.DefaultModels
-import com.openclaw.ai.data.model.ModelDownloadStatus
-import com.openclaw.ai.data.model.ModelInfo
-import com.openclaw.ai.data.model.ModelType
-import com.openclaw.ai.data.repository.DownloadProgress
+import android.util.Log
+import com.openclaw.ai.data.model.*
 import com.openclaw.ai.data.repository.DownloadRepository
 import com.openclaw.ai.data.repository.ModelRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 import java.io.File
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -24,23 +21,52 @@ class ModelRepositoryImpl @Inject constructor(
     private val downloadRepository: DownloadRepository,
 ) : ModelRepository {
 
+    private val repositoryScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+
     private val _availableModels = MutableStateFlow(DefaultModels.ALL)
     override val availableModels: StateFlow<List<ModelInfo>> = _availableModels.asStateFlow()
 
     private val _activeModel = MutableStateFlow<ModelInfo?>(null)
     override val activeModel: StateFlow<ModelInfo?> = _activeModel.asStateFlow()
 
-    private val _downloadStatuses = MutableStateFlow(
-        DefaultModels.ALL.associate { model ->
-            model.id to if (model.type == ModelType.LOCAL) ModelDownloadStatus.NOT_DOWNLOADED
-                        else ModelDownloadStatus.DOWNLOADED
-        }
-    )
+    private val _downloadStatuses = MutableStateFlow<Map<String, ModelDownloadStatus>>(emptyMap())
     override val downloadStatuses: StateFlow<Map<String, ModelDownloadStatus>> =
         _downloadStatuses.asStateFlow()
 
     private val _downloadProgress = MutableStateFlow<Map<String, Float>>(emptyMap())
     override val downloadProgress: StateFlow<Map<String, Float>> = _downloadProgress.asStateFlow()
+
+    init {
+        refreshStatuses()
+        // Start observing workers for all local models to catch resumed/running downloads
+        getLocalModels().forEach { model ->
+            repositoryScope.launch {
+                downloadRepository.getDownloadStatus(model.id).collect { status ->
+                    _downloadStatuses.value = _downloadStatuses.value + (model.id to status)
+                    if (status.status == ModelDownloadStatusType.IN_PROGRESS && status.totalBytes > 0) {
+                        val progress = status.receivedBytes.toFloat() / status.totalBytes.toFloat()
+                        _downloadProgress.value = _downloadProgress.value + (model.id to progress)
+                    } else if (status.status == ModelDownloadStatusType.SUCCEEDED) {
+                        _downloadProgress.value = _downloadProgress.value + (model.id to 1f)
+                    }
+                }
+            }
+        }
+    }
+
+    private fun refreshStatuses() {
+        val initialStatuses = _availableModels.value.associate { model ->
+            val status = if (model.isCloud) {
+                ModelDownloadStatus(ModelDownloadStatusType.SUCCEEDED)
+            } else if (isDownloadedSync(model)) {
+                ModelDownloadStatus(ModelDownloadStatusType.SUCCEEDED)
+            } else {
+                ModelDownloadStatus(ModelDownloadStatusType.NOT_DOWNLOADED)
+            }
+            model.id to status
+        }
+        _downloadStatuses.value = initialStatuses
+    }
 
     override fun getModel(id: String): ModelInfo? =
         _availableModels.value.firstOrNull { it.id == id }
@@ -53,7 +79,7 @@ class ModelRepositoryImpl @Inject constructor(
 
     override fun getDownloadedModels(): List<ModelInfo> =
         _availableModels.value.filter { model ->
-            _downloadStatuses.value[model.id] == ModelDownloadStatus.DOWNLOADED
+            isDownloadedSync(model)
         }
 
     override suspend fun setActiveModel(modelId: String) {
@@ -66,68 +92,46 @@ class ModelRepositoryImpl @Inject constructor(
         onComplete: () -> Unit,
         onError: (String) -> Unit,
     ) {
-        updateStatus(model.id, ModelDownloadStatus.DOWNLOADING)
-
-        downloadRepository.downloadModel(model) { progress: DownloadProgress ->
-            when {
-                progress.isFailed -> {
-                    updateStatus(model.id, ModelDownloadStatus.FAILED)
-                    onError(progress.errorMessage)
-                }
-                progress.isComplete -> {
-                    updateStatus(model.id, ModelDownloadStatus.DOWNLOADED)
-                    updateProgress(model.id, 1f)
-                    onComplete()
-                }
-                else -> {
-                    val fraction = if (progress.totalBytes > 0) {
-                        progress.receivedBytes.toFloat() / progress.totalBytes.toFloat()
-                    } else {
-                        0f
-                    }
-                    updateProgress(model.id, fraction)
-                    onProgress(fraction)
-                }
-            }
-        }
+        downloadRepository.downloadModel(model)
+        // Progress is handled by the init-time observer
     }
 
     override suspend fun cancelDownload(modelId: String) {
-        val model = getModel(modelId) ?: return
-        downloadRepository.cancelDownload(model)
-        updateStatus(modelId, ModelDownloadStatus.NOT_DOWNLOADED)
-        updateProgress(modelId, 0f)
+        downloadRepository.cancelDownload(modelId)
     }
 
     override suspend fun deleteDownloadedModel(modelId: String) {
         val model = getModel(modelId) ?: return
-        val file = modelFile(model.downloadFileName)
+        val path = model.getPath(context)
+        val file = File(path)
         if (file.exists()) {
             file.delete()
         }
-        updateStatus(modelId, ModelDownloadStatus.NOT_DOWNLOADED)
-        updateProgress(modelId, 0f)
-        if (_activeModel.value?.id == modelId) {
-            _activeModel.value = null
+        // Also delete version directory if it's empty
+        file.parentFile?.let { versionDir ->
+            if (versionDir.exists() && versionDir.listFiles()?.isEmpty() == true) {
+                versionDir.delete()
+                versionDir.parentFile?.let { modelDir ->
+                    if (modelDir.exists() && modelDir.listFiles()?.isEmpty() == true) {
+                        modelDir.delete()
+                    }
+                }
+            }
         }
+        refreshStatuses()
     }
 
     override suspend fun isModelDownloaded(modelId: String): Boolean {
         val model = getModel(modelId) ?: return false
-        return modelFile(model.downloadFileName).exists()
+        return isDownloadedSync(model)
     }
 
     override fun observeDownloadProgress(modelId: String): Flow<Float> =
         _downloadProgress.map { it[modelId] ?: 0f }
 
-    private fun modelFile(fileName: String): File =
-        File(context.getExternalFilesDir(null), fileName)
-
-    private fun updateStatus(modelId: String, status: ModelDownloadStatus) {
-        _downloadStatuses.value = _downloadStatuses.value + (modelId to status)
-    }
-
-    private fun updateProgress(modelId: String, fraction: Float) {
-        _downloadProgress.value = _downloadProgress.value + (modelId to fraction)
+    private fun isDownloadedSync(model: ModelInfo): Boolean {
+        if (model.isCloud) return true
+        val path = model.getPath(context)
+        return File(path).exists()
     }
 }

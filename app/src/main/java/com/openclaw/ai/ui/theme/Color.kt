@@ -4,123 +4,110 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.ui.graphics.Color
 
-// ── Primary: purple ───────────────────────────────────────────────────────────
-val Purple10 = Color(0xFF1A0033)
-val Purple20 = Color(0xFF36006B)
-val Purple30 = Color(0xFF5300A4)
-val Purple40 = Color(0xFF7C3AED)  // light primary (#7C3AED)
-val Purple80 = Color(0xFFA855F7)  // dark primary (#A855F7)
-val Purple90 = Color(0xFFEADDFF)
+// Design Tokens from .pen file
+val AccentAmber = Color(0xFFF59E0B)
+val AccentAmberLight = Color(0xFFFCD34D)
+val AccentBlue = Color(0xFF0EA5E9)
+val AccentBlueLight = Color(0xFF7DD3FC)
+val AccentGreen = Color(0xFF10B981)
+val AccentGreenLight = Color(0xFF6EE7B7)
+val AccentPink = Color(0xFFDB2777)
+val AccentPinkLight = Color(0xFFF472B6)
+val AccentViolet = Color(0xFF7C3AED)
+val AccentVioletLight = Color(0xFFA78BFA)
+val AccentRed = Color(0xFFC46B5E)
 
-// ── Secondary: sky blue ───────────────────────────────────────────────────────
-val SkyBlue40 = Color(0xFF0EA5E9)   // cloud badge / light secondary
-val SkyBlue80 = Color(0xFF38BDF8)
+val CanvasBg = Color(0xFFF4F1FA)
+val SurfaceCard = Color(0xFFEDEAF4)
+val SurfacePressed = Color(0xFFE5E1EF)
+val SurfaceInverse = Color(0xFF2A2635)
 
-// ── Tertiary: green ───────────────────────────────────────────────────────────
-val Green40 = Color(0xFF22C55E)     // local badge / light tertiary
-val Green80 = Color(0xFF4ADE80)
+val ForegroundPrimary = Color(0xFF332F3A)
+val ForegroundSecondary = Color(0xFF635F69)
+val ForegroundMuted = Color(0xFF8E8A95)
+val ForegroundInverse = Color(0xFFFFFFFF)
 
-// ── Neutral / surface ─────────────────────────────────────────────────────────
-val Neutral10 = Color(0xFF0F0A1A)   // dark background
-val Neutral15 = Color(0xFF1A1425)   // dark surface
-val Neutral20 = Color(0xFF241B35)   // dark card / surfaceVariant
-val Neutral90 = Color(0xFFE6E1EC)
-val Neutral95 = Color(0xFFF3EFF8)
-val Neutral99 = Color(0xFFF8F5FF)   // light background (#F8F5FF)
+val BorderMuted = Color(0x10000000)
+val BorderLight = Color(0x40FFFFFF)
 
-val NeutralVariant30 = Color(0xFF4A4459)
-val NeutralVariant50 = Color(0xFF7B7589)
-val NeutralVariant60 = Color(0xFF9CA3AF)  // section label color
-val NeutralVariant80 = Color(0xFFCAC4D4)
-val NeutralVariant90 = Color(0xFFE7E0F0)
+// Shadow colors (mapping for reference, though Compose uses elevation)
+val ShadowButtonDrop = Color(0x4D7C3AED)
+val ShadowCardDrop = Color(0x33A096B4)
 
-// ── Chat bubble surfaces ──────────────────────────────────────────────────────
-val UserBubbleLight = Color(0xFF7C3AED)   // solid purple (#7C3AED)
-val UserBubbleDark = Color(0xFF7C3AED)    // same purple in dark
-val AssistantBubbleLight = Color(0xFFFFFFFF) // white
-val AssistantBubbleDark = Color(0xFF241B35)  // dark card (#241B35)
+// Chat specific
+val UserBubbleLight = AccentViolet
+val UserBubbleDark = AccentViolet
+val AssistantBubbleLight = ForegroundInverse
+val AssistantBubbleDark = Color(0xFF2A2635)
 
-// ── Semantic / badge colors ───────────────────────────────────────────────────
-val LocalBadgeGreen = Color(0xFF22C55E)
-val CloudBadgeBlue = Color(0xFF0EA5E9)
-val ToolResultBorderLight = Color(0xFF7C3AED)
-val ToolResultBorderDark = Color(0xFF7C3AED)
+val LocalBadgeGreen = AccentGreen
+val CloudBadgeBlue = AccentBlue
+val ToolResultBorderLight = AccentViolet
+val ToolResultBorderDark = AccentViolet
 
-// ── Code block ────────────────────────────────────────────────────────────────
 val CodeBlockBg = Color(0xFF1E1033)
 val CodeBlockText = Color(0xFFA5F3C4)
 
-// ── Chip gradient ─────────────────────────────────────────────────────────────
-val ChipGradientStart = Color(0xFF7C3AED)
-val ChipGradientEnd = Color(0xFFA855F7)
+val ChipGradientStart = AccentViolet
+val ChipGradientEnd = AccentVioletLight
 
-// ── Section label ─────────────────────────────────────────────────────────────
-val SectionLabel = Color(0xFF9CA3AF)
+val SectionLabel = ForegroundMuted
 
-// ── Material3 light color scheme ──────────────────────────────────────────────
+// Material3 light color scheme
 val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    onPrimary = Color.White,
-    primaryContainer = Purple90,
-    onPrimaryContainer = Purple10,
+    primary = AccentViolet,
+    onPrimary = ForegroundInverse,
+    primaryContainer = AccentVioletLight,
+    onPrimaryContainer = ForegroundPrimary,
 
-    secondary = SkyBlue40,
-    onSecondary = Color.White,
-    secondaryContainer = Color(0xFFE0F2FE),
-    onSecondaryContainer = Color(0xFF0C4A6E),
+    secondary = AccentBlue,
+    onSecondary = ForegroundInverse,
+    secondaryContainer = AccentBlueLight,
+    onSecondaryContainer = ForegroundPrimary,
 
-    tertiary = Green40,
-    onTertiary = Color.White,
-    tertiaryContainer = Color(0xFFDCFCE7),
-    onTertiaryContainer = Color(0xFF14532D),
+    tertiary = AccentGreen,
+    onTertiary = ForegroundInverse,
+    tertiaryContainer = AccentGreenLight,
+    onTertiaryContainer = ForegroundPrimary,
 
-    background = Neutral99,
-    onBackground = Neutral10,
+    background = CanvasBg,
+    onBackground = ForegroundPrimary,
 
-    surface = Color.White,
-    onSurface = Neutral10,
-    surfaceVariant = NeutralVariant90,
-    onSurfaceVariant = NeutralVariant30,
+    surface = ForegroundInverse,
+    onSurface = ForegroundPrimary,
+    surfaceVariant = SurfaceCard,
+    onSurfaceVariant = ForegroundSecondary,
 
-    outline = NeutralVariant50,
-    outlineVariant = NeutralVariant80,
+    outline = ForegroundMuted,
+    outlineVariant = BorderMuted,
 
-    error = Color(0xFFB3261E),
-    onError = Color.White,
-    errorContainer = Color(0xFFF9DEDC),
-    onErrorContainer = Color(0xFF410E0B),
+    error = Color(0xFFC46B5E),
+    onError = ForegroundInverse,
 )
 
-// ── Material3 dark color scheme ───────────────────────────────────────────────
+// Material3 dark color scheme (Approximation based on design system logic)
 val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    onPrimary = Purple20,
-    primaryContainer = Purple30,
-    onPrimaryContainer = Purple90,
+    primary = AccentVioletLight,
+    onPrimary = SurfaceInverse,
+    primaryContainer = AccentViolet,
+    onPrimaryContainer = ForegroundInverse,
 
-    secondary = SkyBlue80,
-    onSecondary = Color(0xFF0C4A6E),
-    secondaryContainer = Color(0xFF075985),
-    onSecondaryContainer = Color(0xFFE0F2FE),
+    secondary = AccentBlueLight,
+    onSecondary = SurfaceInverse,
+    secondaryContainer = AccentBlue,
+    onSecondaryContainer = ForegroundInverse,
 
-    tertiary = Green80,
-    onTertiary = Color(0xFF14532D),
-    tertiaryContainer = Color(0xFF166534),
-    onTertiaryContainer = Color(0xFFDCFCE7),
+    background = SurfaceInverse,
+    onBackground = ForegroundInverse,
 
-    background = Neutral10,
-    onBackground = Neutral90,
+    surface = Color(0xFF332F3A),
+    onSurface = ForegroundInverse,
+    surfaceVariant = Color(0xFF45404D),
+    onSurfaceVariant = ForegroundInverse,
 
-    surface = Neutral15,
-    onSurface = Neutral90,
-    surfaceVariant = Neutral20,
-    onSurfaceVariant = NeutralVariant80,
+    outline = ForegroundMuted,
+    outlineVariant = BorderLight,
 
-    outline = NeutralVariant60,
-    outlineVariant = NeutralVariant30,
-
-    error = Color(0xFFF2B8B5),
-    onError = Color(0xFF601410),
-    errorContainer = Color(0xFF8C1D18),
-    onErrorContainer = Color(0xFFF9DEDC),
+    error = Color(0xFFC46B5E),
+    onError = ForegroundInverse,
 )

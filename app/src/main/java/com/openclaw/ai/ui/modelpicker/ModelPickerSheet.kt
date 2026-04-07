@@ -28,8 +28,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.openclaw.ai.data.model.ModelDownloadStatus
-import com.openclaw.ai.data.model.ModelInfo
+import com.openclaw.ai.data.model.*
+import com.openclaw.ai.data.model.ModelDownloadStatusType.*
 
 private val PurpleAccent = Color(0xFF7C3AED)
 private val SectionLabelGray = Color(0xFF9CA3AF)
@@ -78,11 +78,11 @@ fun ModelPickerSheet(
                     ModelItem(
                         model = model,
                         isActive = model.id == activeModelId,
-                        downloadStatus = downloadStatuses[model.id] ?: ModelDownloadStatus.NOT_DOWNLOADED,
+                        downloadStatus = downloadStatuses[model.id] ?: ModelDownloadStatus(NOT_DOWNLOADED),
                         downloadProgress = downloadProgress[model.id] ?: 0f,
                         onSelect = {
                             viewModel.selectModel(model.id)
-                            if (downloadStatuses[model.id] == ModelDownloadStatus.DOWNLOADED) {
+                            if (downloadStatuses[model.id]?.status == SUCCEEDED) {
                                 onDismiss()
                             }
                         },
@@ -99,7 +99,7 @@ fun ModelPickerSheet(
                     ModelItem(
                         model = model,
                         isActive = model.id == activeModelId,
-                        downloadStatus = ModelDownloadStatus.DOWNLOADED,
+                        downloadStatus = ModelDownloadStatus(SUCCEEDED),
                         downloadProgress = 0f,
                         onSelect = {
                             viewModel.selectModel(model.id)

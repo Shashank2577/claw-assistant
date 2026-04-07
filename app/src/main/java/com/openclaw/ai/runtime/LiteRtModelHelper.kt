@@ -3,18 +3,8 @@ package com.openclaw.ai.runtime
 import android.content.Context
 import android.graphics.Bitmap
 import android.util.Log
-import com.google.ai.edge.litertlm.Backend
-import com.google.ai.edge.litertlm.Content
-import com.google.ai.edge.litertlm.Contents
-import com.google.ai.edge.litertlm.Conversation
-import com.google.ai.edge.litertlm.ConversationConfig
-import com.google.ai.edge.litertlm.Engine
-import com.google.ai.edge.litertlm.EngineConfig
-import com.google.ai.edge.litertlm.Message
-import com.google.ai.edge.litertlm.MessageCallback
-import com.google.ai.edge.litertlm.SamplerConfig
-import com.openclaw.ai.data.model.ModelInfo
-import com.openclaw.ai.data.model.ToolDefinition
+import com.google.ai.edge.litertlm.*
+import com.openclaw.ai.data.model.*
 import kotlinx.coroutines.CoroutineScope
 import java.io.ByteArrayOutputStream
 import java.io.File
@@ -33,6 +23,7 @@ class LiteRtModelHelper @Inject constructor() : LlmModelHelper {
     private val instances: MutableMap<String, LlmModelInstance> = mutableMapOf()
     private val cleanUpListeners: MutableMap<String, CleanUpListener> = mutableMapOf()
 
+    @OptIn(ExperimentalApi::class)
     override fun initialize(
         context: Context,
         model: ModelInfo,
@@ -43,14 +34,30 @@ class LiteRtModelHelper @Inject constructor() : LlmModelHelper {
         tools: List<ToolDefinition>,
         coroutineScope: CoroutineScope?,
     ) {
-        val modelPath = getModelPath(context, model)
+        val modelPath = model.getPath(context)
+        Log.d(TAG, "Initializing model '${model.id}' from path: $modelPath")
+
+        // Map accelerators to LiteRT backends
+        val preferredAccelerator = model.accelerators.firstOrNull() ?: Accelerator.CPU
+        val preferredBackend = when (preferredAccelerator) {
+            Accelerator.CPU -> Backend.CPU()
+            Accelerator.GPU -> Backend.GPU()
+            Accelerator.NPU -> Backend.NPU(nativeLibraryDir = context.applicationInfo.nativeLibraryDir)
+        }
+
+        val visionBackend = when (model.visionAccelerator) {
+            Accelerator.CPU -> Backend.CPU()
+            Accelerator.GPU -> Backend.GPU()
+            Accelerator.NPU -> Backend.NPU(nativeLibraryDir = context.applicationInfo.nativeLibraryDir)
+        }
 
         val engineConfig = EngineConfig(
             modelPath = modelPath,
-            backend = Backend.CPU(),
-            visionBackend = if (supportImage) Backend.GPU() else null,
+            backend = preferredBackend,
+            visionBackend = if (supportImage) visionBackend else null,
             audioBackend = if (supportAudio) Backend.CPU() else null,
             maxNumTokens = model.defaultMaxTokens,
+            cacheDir = if (modelPath.startsWith("/data/local/tmp")) context.getExternalFilesDir(null)?.absolutePath else null
         )
 
         try {
@@ -63,7 +70,7 @@ class LiteRtModelHelper @Inject constructor() : LlmModelHelper {
 
             val conversation = engine.createConversation(
                 ConversationConfig(
-                    samplerConfig = SamplerConfig(
+                    samplerConfig = if (preferredBackend is Backend.NPU) null else SamplerConfig(
                         topK = model.defaultTopK,
                         topP = model.defaultTopP.toDouble(),
                         temperature = model.defaultTemperature.toDouble(),
@@ -73,7 +80,7 @@ class LiteRtModelHelper @Inject constructor() : LlmModelHelper {
             )
 
             instances[model.id] = LlmModelInstance(engine = engine, conversation = conversation)
-            Log.d(TAG, "Initialized model '${model.id}'")
+            Log.d(TAG, "Initialized model '${model.id}' successfully with backend: $preferredBackend")
             onDone("")
         } catch (e: Exception) {
             Log.e(TAG, "Failed to initialize model '${model.id}'", e)
@@ -81,6 +88,7 @@ class LiteRtModelHelper @Inject constructor() : LlmModelHelper {
         }
     }
 
+    @OptIn(ExperimentalApi::class)
     override fun resetConversation(
         model: ModelInfo,
         supportImage: Boolean,
@@ -96,9 +104,11 @@ class LiteRtModelHelper @Inject constructor() : LlmModelHelper {
                 Contents.of(listOf(Content.Text(it)))
             }
 
+            val preferredAccelerator = model.accelerators.firstOrNull() ?: Accelerator.CPU
+            
             val newConversation = instance.engine.createConversation(
                 ConversationConfig(
-                    samplerConfig = SamplerConfig(
+                    samplerConfig = if (preferredAccelerator == Accelerator.NPU) null else SamplerConfig(
                         topK = model.defaultTopK,
                         topP = model.defaultTopP.toDouble(),
                         temperature = model.defaultTemperature.toDouble(),
@@ -194,15 +204,6 @@ class LiteRtModelHelper @Inject constructor() : LlmModelHelper {
 
     override fun stopResponse(model: ModelInfo) {
         instances[model.id]?.conversation?.cancelProcess()
-    }
-
-    private fun getModelPath(context: Context, model: ModelInfo): String {
-        val normalizedName = model.name.lowercase().replace(" ", "_")
-        return File(
-            context.getExternalFilesDir(null),
-            listOf(normalizedName, model.version, model.downloadFileName)
-                .joinToString(File.separator)
-        ).absolutePath
     }
 
     private fun Bitmap.toPngByteArray(): ByteArray {

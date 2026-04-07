@@ -31,8 +31,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.openclaw.ai.data.model.ModelDownloadStatus
-import com.openclaw.ai.data.model.ModelInfo
+import com.openclaw.ai.data.model.*
+import com.openclaw.ai.data.model.ModelDownloadStatusType.*
 import com.openclaw.ai.ui.theme.OpenClawAITheme
 
 private val PurpleAccent = Color(0xFF7C3AED)
@@ -49,8 +49,8 @@ fun ModelItem(
     onSelect: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val isDownloaded = model.isCloud || downloadStatus == ModelDownloadStatus.DOWNLOADED
-    val isDownloading = downloadStatus == ModelDownloadStatus.DOWNLOADING
+    val isDownloaded = model.isCloud || downloadStatus.status == SUCCEEDED
+    val isDownloading = downloadStatus.status == IN_PROGRESS || downloadStatus.status == UNZIPPING
 
     Surface(
         modifier = modifier
@@ -85,7 +85,7 @@ fun ModelItem(
                     style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
                     color = MaterialTheme.colorScheme.onSurface,
                 )
-                if (model.sizeLabel.isNotEmpty() || model.downloadSizeBytes > 0L) {
+                if (model.sizeLabel.isNotEmpty() || model.sizeInBytes > 0L) {
                     val sizeText = buildSizeLabel(model)
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
@@ -185,8 +185,8 @@ private fun ModelTypeBadge(isLocal: Boolean) {
 private fun buildSizeLabel(model: ModelInfo): String {
     val parts = mutableListOf<String>()
     if (model.sizeLabel.isNotEmpty()) parts.add(model.sizeLabel)
-    if (model.downloadSizeBytes > 0L) {
-        val gb = model.downloadSizeBytes / 1_000_000_000.0
+    if (model.sizeInBytes > 0L) {
+        val gb = model.sizeInBytes / 1_000_000_000.0
         parts.add("%.1f GB".format(gb))
     }
     return parts.joinToString(" · ")
@@ -197,9 +197,9 @@ private fun buildSizeLabel(model: ModelInfo): String {
 private fun ModelItemLocalActivePreview() {
     OpenClawAITheme {
         ModelItem(
-            model = com.openclaw.ai.data.model.DefaultModels.GEMMA_4,
+            model = com.openclaw.ai.data.model.DefaultModels.GEMMA_3N_2B,
             isActive = true,
-            downloadStatus = ModelDownloadStatus.DOWNLOADED,
+            downloadStatus = ModelDownloadStatus(SUCCEEDED),
             downloadProgress = 0f,
             onSelect = {},
         )
@@ -211,9 +211,9 @@ private fun ModelItemLocalActivePreview() {
 private fun ModelItemDownloadingPreview() {
     OpenClawAITheme {
         ModelItem(
-            model = com.openclaw.ai.data.model.DefaultModels.GEMMA_4,
+            model = com.openclaw.ai.data.model.DefaultModels.GEMMA_3N_2B,
             isActive = false,
-            downloadStatus = ModelDownloadStatus.DOWNLOADING,
+            downloadStatus = ModelDownloadStatus(IN_PROGRESS),
             downloadProgress = 0.63f,
             onSelect = {},
         )
@@ -227,7 +227,7 @@ private fun ModelItemCloudPreview() {
         ModelItem(
             model = com.openclaw.ai.data.model.DefaultModels.GEMINI_FLASH,
             isActive = false,
-            downloadStatus = ModelDownloadStatus.DOWNLOADED,
+            downloadStatus = ModelDownloadStatus(SUCCEEDED),
             downloadProgress = 0f,
             onSelect = {},
         )
