@@ -11,16 +11,11 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.staticCompositionLocalOf
-import androidx.compose.runtime.provides
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
 /**
- * Holder for custom colors that are not part of the Material3 color scheme but
- * are needed throughout the app (chat bubbles, badges, tool result borders,
- * code blocks, gradient chips, section labels).
+ * Holder for custom colors that are not part of the Material3 color scheme.
  */
 @Immutable
 data class OpenClawColors(
@@ -65,23 +60,14 @@ val DarkOpenClawColors = OpenClawColors(
     sectionLabel = SectionLabel,
 )
 
-val LocalOpenClawColors: CompositionLocal<OpenClawColors> = staticCompositionLocalOf {
-    LightOpenClawColors
-}
+val LocalOpenClawColors = staticCompositionLocalOf { LightOpenClawColors }
 
-/** Convenience accessor — call from any composable inside [OpenClawAITheme]. */
+/** Convenience accessor. */
 val MaterialTheme.customColors: OpenClawColors
     @Composable
     @ReadOnlyComposable
     get() = LocalOpenClawColors.current
 
-/**
- * App-level theme composable.
- *
- * @param darkTheme      Force dark/light mode. Defaults to system setting.
- * @param dynamicColor   Use Material You dynamic colors on Android 12+.
- * @param content        Composable content.
- */
 @Composable
 fun OpenClawAITheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
@@ -99,9 +85,7 @@ fun OpenClawAITheme(
 
     val customColors = if (darkTheme) DarkOpenClawColors else LightOpenClawColors
 
-    CompositionLocalProvider(
-        LocalOpenClawColors provides customColors
-    ) {
+    CompositionLocalProvider(LocalOpenClawColors provides customColors) {
         MaterialTheme(
             colorScheme = colorScheme,
             typography = AppTypography,

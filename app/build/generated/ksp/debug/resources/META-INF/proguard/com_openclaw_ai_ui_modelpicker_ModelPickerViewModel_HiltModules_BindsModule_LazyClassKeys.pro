@@ -1,1 +1,0 @@
--keep,allowobfuscation,allowshrinking class com.openclaw.ai.ui.modelpicker.ModelPickerViewModel

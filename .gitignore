@@ -1,1 +1,36 @@
+# Gradle
+.gradle/
+build/
+
+# Android Studio / IntelliJ
+.idea/
+*.iml
+*.iws
+.project
+.settings
+.classpath
+.metadata/
+bin/
+out/
+
+# Local configuration
+local.properties
+
+# Secrets
+secrets.properties
+
+# Build artifacts
+*.apk
+*.aar
+*.ap_
+*.dex
+*.class
+
+# Captured screenshots
+captures/
+
+# Others
+.DS_Store
+.omc/
 .gallery-ref/
+designs/.omc/
