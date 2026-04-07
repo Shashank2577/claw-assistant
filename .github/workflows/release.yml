@@ -41,7 +41,7 @@ jobs:
           # For now, it increments the minor/patch version as per the task logic.
 
       - name: Build with Gradle
-        run: ./gradlew assembleRelease
+        run: ./gradlew assembleDebug
 
       - name: Get Version Name
         id: get_version
@@ -58,7 +58,7 @@ jobs:
           name: Release ${{ env.VERSION_NAME }}
           draft: false
           prerelease: false
-          files: app/build/outputs/apk/release/*.apk
+          files: app/build/outputs/apk/debug/*.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
