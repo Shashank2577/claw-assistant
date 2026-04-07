@@ -24,8 +24,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.openclaw.ai.data.model.*
-import com.openclaw.ai.data.model.ModelDownloadStatusType.*
+import com.openclaw.ai.data.*
+import com.openclaw.ai.data.ModelDownloadStatusType.*
 import com.openclaw.ai.data.repository.ThemeMode
 import com.openclaw.ai.ui.theme.*
 
@@ -89,17 +89,17 @@ fun SettingsScreen(
                 SectionHeader("On-Device Models")
             }
             
-            val localModels = availableModels.filter { it.isLocal }
-            items(localModels, key = { it.id }) { model ->
+            val localModels = availableModels.filter { it.url.isNotEmpty() }
+            items(localModels, key = { it.name }) { model ->
                 ModelManagementCard(
                     model = model,
-                    status = downloadStatuses[model.id] ?: ModelDownloadStatus(NOT_DOWNLOADED),
-                    progress = downloadProgress[model.id] ?: 0f,
-                    isDefault = model.id == defaultModelId,
-                    onDownload = { viewModel.downloadModel(model.id) },
-                    onDelete = { viewModel.deleteModel(model.id) },
-                    onSetDefault = { viewModel.setDefaultModel(model.id) },
-                    onCancel = { viewModel.cancelDownload(model.id) }
+                    status = downloadStatuses[model.name] ?: ModelDownloadStatus(NOT_DOWNLOADED),
+                    progress = downloadProgress[model.name] ?: 0f,
+                    isDefault = model.name == defaultModelId,
+                    onDownload = { viewModel.downloadModel(model.name) },
+                    onDelete = { viewModel.deleteModel(model.name) },
+                    onSetDefault = { viewModel.setDefaultModel(model.name) },
+                    onCancel = { viewModel.cancelDownload(model.name) }
                 )
             }
 
@@ -112,7 +112,6 @@ fun SettingsScreen(
                         isKeyVisible = uiState.isApiKeyVisible,
                         onApiKeyChange = viewModel::onApiKeyChange,
                         onToggleVisibility = viewModel::toggleApiKeyVisibility,
-                        onTestConnection = viewModel::testApiKey,
                         onSave = viewModel::saveApiKey,
                         isValid = uiState.isApiKeyValid,
                         isTesting = uiState.isTesting
@@ -200,7 +199,7 @@ private fun SettingsCard(content: @Composable ColumnScope.() -> Unit) {
 
 @Composable
 private fun ModelManagementCard(
-    model: ModelInfo,
+    model: Model,
     status: ModelDownloadStatus,
     progress: Float,
     isDefault: Boolean,
@@ -227,8 +226,9 @@ private fun ModelManagementCard(
                         Badge(containerColor = AccentGreen) { Text("DEFAULT", fontSize = 9.sp) }
                     }
                 }
+                val sizeLabel = if (model.sizeInBytes > 0) "%.1f GB".format(model.sizeInBytes / 1_000_000_000.0) else "Unknown size"
                 Text(
-                    "${model.sizeLabel} • ${status.status.name.replace("_", " ")}",
+                    "$sizeLabel • ${status.status.name.replace("_", " ")}",
                     style = MaterialTheme.typography.bodySmall,
                     color = ForegroundMuted
                 )

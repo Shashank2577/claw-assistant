@@ -7,6 +7,7 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.protobuf)
     alias(libs.plugins.hilt.application)
     alias(libs.plugins.ksp)
 }
@@ -32,21 +33,24 @@ android {
 
     defaultConfig {
         applicationId = "com.openclaw.ai"
-        minSdk = 29
+        minSdk = 31
         targetSdk = 35
         versionCode = props["VERSION_CODE"].toString().toInt()
         versionName = props["VERSION_NAME"].toString()
+
+        manifestPlaceholders["appAuthRedirectScheme"] = "com.openclaw.ai.auth"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
         release {
-            isMinifyEnabled = true
+            isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
 
@@ -58,12 +62,19 @@ android {
     kotlin {
         compilerOptions {
             jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11)
+            freeCompilerArgs.add("-Xcontext-receivers")
         }
     }
 
     buildFeatures {
         compose = true
         buildConfig = true
+    }
+
+    sourceSets {
+        getByName("main") {
+            java.srcDirs("build/generated/sources/proto/debug/java")
+        }
     }
 }
 
@@ -75,6 +86,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.lifecycle.process)
+    implementation(libs.androidx.exifinterface)
 
     // Compose
     implementation(platform(libs.androidx.compose.bom))
@@ -85,30 +97,38 @@ dependencies {
     implementation(libs.androidx.compose.navigation)
     implementation(libs.material.icon.extended)
 
-    // Serialization
+    // Serialization & Reflection
     implementation(libs.kotlinx.serialization.json)
+    implementation(libs.kotlin.reflect)
+    implementation(libs.com.google.code.gson)
+    implementation(libs.moshi.kotlin)
+    ksp(libs.moshi.kotlin.codegen)
 
     // Room Database
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
     ksp(libs.room.compiler)
 
-    // DataStore Preferences
-    implementation(libs.androidx.datastore.preferences)
+    // DataStore & Protobuf
+    implementation(libs.androidx.datastore)
+    implementation(libs.protobuf.javalite)
 
     // Hilt DI
     implementation(libs.hilt.android)
     implementation(libs.hilt.navigation.compose)
     ksp(libs.hilt.android.compiler)
 
-    // On-device LLM
+    // On-device LLM & TFLite
     implementation(libs.litertlm)
+    implementation(libs.tflite)
+    implementation(libs.tflite.gpu)
+    implementation(libs.tflite.support)
 
     // Markdown rendering
     implementation(libs.commonmark)
     implementation(libs.richtext)
 
-    // Networking (for cloud models + SSE)
+    // Networking
     implementation(libs.okhttp)
     implementation(libs.okhttp.sse)
 
@@ -121,17 +141,18 @@ dependencies {
     implementation(libs.camerax.lifecycle)
     implementation(libs.camerax.view)
 
-    // Security (encrypted prefs for API keys)
+    // Security
     implementation(libs.androidx.security.crypto)
 
-    // WorkManager (model downloads)
+    // WorkManager
     implementation(libs.androidx.work.runtime)
+
+    // Webview & Auth
+    implementation(libs.androidx.webkit)
+    implementation(libs.openid.appauth)
 
     // Splash screen
     implementation(libs.androidx.splashscreen)
-
-    // Gson
-    implementation(libs.com.google.code.gson)
 
     // Testing
     testImplementation(libs.junit)
@@ -143,6 +164,21 @@ dependencies {
     androidTestImplementation(libs.hilt.android.testing)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+}
+
+protobuf {
+    protoc {
+        artifact = "com.google.protobuf:protoc:4.26.1"
+    }
+    generateProtoTasks {
+        all().forEach { task ->
+            task.builtins {
+                create("java") {
+                    option("lite")
+                }
+            }
+        }
+    }
 }
 
 tasks.register("incrementVersion") {
@@ -159,7 +195,6 @@ tasks.register("incrementVersion") {
         val name = p["VERSION_NAME"].toString()
         val parts = name.split(".").toMutableList()
         
-        // Check if major upgrade was requested via system property
         val isMajor = project.hasProperty("majorUpgrade") && project.property("majorUpgrade") == "true"
         
         if (isMajor) {
@@ -167,7 +202,6 @@ tasks.register("incrementVersion") {
             p["VERSION_NAME"] = "$major.0.0"
         } else {
             if (parts.size >= 2) {
-                // Increment minor version for every release as requested
                 val minor = parts[1].toInt() + 1
                 p["VERSION_NAME"] = "${parts[0]}.$minor.0"
             } else {

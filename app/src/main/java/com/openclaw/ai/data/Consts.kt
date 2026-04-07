@@ -1,6 +1,23 @@
-package com.openclaw.ai.data.model
+/*
+ * Copyright 2025 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.openclaw.ai.data
 
 import android.os.Build
+import androidx.compose.ui.unit.dp
 
 // Keys used to send/receive data to Work.
 const val KEY_MODEL_URL = "KEY_MODEL_URL"
@@ -28,14 +45,32 @@ const val DEFAULT_TEMPERATURE = 1.0f
 val DEFAULT_ACCELERATORS = listOf(Accelerator.GPU)
 val DEFAULT_VISION_ACCELERATOR = Accelerator.GPU
 
+// Max number of images allowed in a "ask image" session.
+const val MAX_IMAGE_COUNT = 10
+
+// Max number of skills recommended in a "agent skills" session.
+const val MAX_RECOMMENDED_SKILL_COUNT = 15
+
+// Max number of audio clip in an "ask audio" session.
+const val MAX_AUDIO_CLIP_COUNT = 1
+
+// Max audio clip duration in seconds.
+const val MAX_AUDIO_CLIP_DURATION_SEC = 30
+
+// Audio-recording related consts.
+const val SAMPLE_RATE = 16000
+
+// The size the icon shown under each of the model names in the model list screen.
+val MODEL_INFO_ICON_SIZE = 18.dp
+
 // The extension of the tmp download files.
-const val TMP_FILE_EXT = "openclawtmp"
+const val TMP_FILE_EXT = "gallerytmp"
 
 // Current device's SOC in lowercase.
 val SOC =
-    (if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-        Build.SOC_MODEL ?: ""
+  (if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+      Build.SOC_MODEL ?: ""
     } else {
-        ""
+      ""
     })
-        .lowercase()
+    .lowercase()

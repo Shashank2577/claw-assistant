@@ -2,7 +2,8 @@ package com.openclaw.ai.ui.onboarding
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.openclaw.ai.data.model.*
+import com.openclaw.ai.data.Model
+import com.openclaw.ai.data.ModelDownloadStatusType
 import com.openclaw.ai.data.repository.ModelRepository
 import com.openclaw.ai.data.repository.SettingsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -12,7 +13,7 @@ import javax.inject.Inject
 
 data class OnboardingUiState(
     val currentStep: Int = 0,
-    val selectedLocalModel: ModelInfo = DefaultModels.GEMMA_3N_2B,
+    val selectedLocalModel: Model? = null,
     val downloadProgress: Float = 0f,
     val isDownloading: Boolean = false,
     val apiKey: String = "",
@@ -30,14 +31,23 @@ class OnboardingViewModel @Inject constructor(
     val uiState: StateFlow<OnboardingUiState> = _uiState.asStateFlow()
 
     init {
-        // Observe download progress for the onboarding model
+        viewModelScope.launch {
+            modelRepository.availableModels.collect { models ->
+                if (models.isNotEmpty() && _uiState.value.selectedLocalModel == null) {
+                    val gemma = models.find { it.name.contains("Gemma", ignoreCase = true) } ?: models.first()
+                    _uiState.update { it.copy(selectedLocalModel = gemma) }
+                }
+            }
+        }
+
         viewModelScope.launch {
             modelRepository.downloadStatuses.collect { statuses ->
-                val status = statuses[_uiState.value.selectedLocalModel.id]
+                val model = _uiState.value.selectedLocalModel ?: return@collect
+                val status = statuses[model.name]
                 if (status != null) {
                     val inProgress = status.status == ModelDownloadStatusType.IN_PROGRESS || 
                                    status.status == ModelDownloadStatusType.UNZIPPING
-                    _uiState.value = _uiState.value.copy(isDownloading = inProgress)
+                    _uiState.update { it.copy(isDownloading = inProgress) }
                     
                     if (status.status == ModelDownloadStatusType.SUCCEEDED && _uiState.value.currentStep == 1) {
                         nextStep()
@@ -48,15 +58,16 @@ class OnboardingViewModel @Inject constructor(
         
         viewModelScope.launch {
             modelRepository.downloadProgress.collect { progressMap ->
-                val progress = progressMap[_uiState.value.selectedLocalModel.id] ?: 0f
-                _uiState.value = _uiState.value.copy(downloadProgress = progress)
+                val model = _uiState.value.selectedLocalModel ?: return@collect
+                val progress = progressMap[model.name] ?: 0f
+                _uiState.update { it.copy(downloadProgress = progress) }
             }
         }
     }
 
     fun nextStep() {
         if (_uiState.value.currentStep < 3) {
-            _uiState.value = _uiState.value.copy(currentStep = _uiState.value.currentStep + 1)
+            _uiState.update { it.copy(currentStep = it.currentStep + 1) }
         } else {
             completeOnboarding()
         }
@@ -64,16 +75,12 @@ class OnboardingViewModel @Inject constructor(
 
     fun prevStep() {
         if (_uiState.value.currentStep > 0) {
-            _uiState.value = _uiState.value.copy(currentStep = _uiState.value.currentStep - 1)
+            _uiState.update { it.copy(currentStep = it.currentStep - 1) }
         }
     }
 
-    fun goToStep(step: Int) {
-        _uiState.value = _uiState.value.copy(currentStep = step)
-    }
-
     fun startModelDownload() {
-        val model = _uiState.value.selectedLocalModel
+        val model = _uiState.value.selectedLocalModel ?: return
         viewModelScope.launch {
             modelRepository.downloadModel(model)
         }
@@ -83,12 +90,8 @@ class OnboardingViewModel @Inject constructor(
         nextStep()
     }
 
-    fun skipCloudSetup() {
-        completeOnboarding()
-    }
-
     fun onApiKeyChange(key: String) {
-        _uiState.value = _uiState.value.copy(apiKey = key, isApiKeyValid = null)
+        _uiState.update { it.copy(apiKey = key, isApiKeyValid = null) }
     }
 
     fun saveApiKey(key: String) {
@@ -101,9 +104,10 @@ class OnboardingViewModel @Inject constructor(
     fun completeOnboarding() {
         viewModelScope.launch {
             settingsRepository.setOnboardingComplete(true)
-            // Set the downloaded or selected model as default
-            settingsRepository.setDefaultModelId(_uiState.value.selectedLocalModel.id)
-            _uiState.value = _uiState.value.copy(isComplete = true)
+            _uiState.value.selectedLocalModel?.let { 
+                settingsRepository.setDefaultModelId(it.name)
+            }
+            _uiState.update { it.copy(isComplete = true) }
         }
     }
 }

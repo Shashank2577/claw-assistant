@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -17,22 +16,17 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.snapshotFlow
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.openclaw.ai.ui.theme.*
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 
 private const val PAGE_COUNT = 4
@@ -43,7 +37,7 @@ fun OnboardingScreen(
     modifier: Modifier = Modifier,
     viewModel: OnboardingViewModel = hiltViewModel(),
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val pagerState = rememberPagerState(pageCount = { PAGE_COUNT })
     val coroutineScope = rememberCoroutineScope()
 
@@ -53,7 +47,7 @@ fun OnboardingScreen(
         }
     }
 
-    // Sync pager position when ViewModel step changes (e.g. after download completes).
+    // Sync pager position when ViewModel step changes
     LaunchedEffect(uiState.currentStep) {
         if (pagerState.currentPage != uiState.currentStep) {
             pagerState.animateScrollToPage(uiState.currentStep)
@@ -69,7 +63,7 @@ fun OnboardingScreen(
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
-        containerColor = Color(0xFFF3EFFE),
+        containerColor = CanvasBg,
     ) { innerPadding ->
         Box(
             modifier = Modifier
@@ -83,26 +77,16 @@ fun OnboardingScreen(
             ) { page ->
                 when (page) {
                     0 -> WelcomeStep(
-                        onNext = {
-                            coroutineScope.launch {
-                                pagerState.animateScrollToPage(1)
-                            }
-                        },
+                        onNext = { viewModel.nextStep() },
                     )
                     1 -> ModelDownloadStep(
                         isDownloading = uiState.isDownloading,
                         downloadProgress = uiState.downloadProgress,
                         onDownload = { viewModel.startModelDownload() },
-                        onSkip = {
-                            viewModel.skipModelDownload()
-                        },
+                        onSkip = { viewModel.skipModelDownload() },
                     )
                     2 -> PermissionsStep(
-                        onNext = {
-                            coroutineScope.launch {
-                                pagerState.animateScrollToPage(3)
-                            }
-                        },
+                        onNext = { viewModel.nextStep() },
                     )
                     3 -> CloudSetupStep(
                         onSaveKey = { key -> viewModel.saveApiKey(key) },
@@ -111,14 +95,10 @@ fun OnboardingScreen(
                 }
             }
 
-            // Back button — visible on pages 1-3
+            // Back button
             if (uiState.currentStep > 0 && !uiState.isDownloading) {
                 IconButton(
-                    onClick = {
-                        coroutineScope.launch {
-                            pagerState.animateScrollToPage(uiState.currentStep - 1)
-                        }
-                    },
+                    onClick = { viewModel.prevStep() },
                     modifier = Modifier
                         .align(Alignment.TopStart)
                         .padding(8.dp),
@@ -126,7 +106,7 @@ fun OnboardingScreen(
                     Icon(
                         imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
                         contentDescription = "Back",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        tint = ForegroundSecondary,
                     )
                 }
             }
@@ -137,7 +117,7 @@ fun OnboardingScreen(
                 pageCount = PAGE_COUNT,
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
-                    .padding(bottom = 16.dp),
+                    .padding(bottom = 32.dp),
             )
         }
     }
@@ -162,7 +142,7 @@ private fun PageIndicator(
                 label = "dot_width_$index",
             )
             val dotColor by animateColorAsState(
-                targetValue = if (isSelected) Color(0xFF7C3AED) else Color(0xFFD1D5DB),
+                targetValue = if (isSelected) AccentViolet else Color(0xFFD1D5DB),
                 animationSpec = tween(durationMillis = 250),
                 label = "dot_color_$index",
             )

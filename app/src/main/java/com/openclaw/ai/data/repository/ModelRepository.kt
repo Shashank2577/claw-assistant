@@ -1,42 +1,42 @@
 package com.openclaw.ai.data.repository
 
-import com.openclaw.ai.data.model.ModelDownloadStatus
-import com.openclaw.ai.data.model.ModelInfo
+import com.openclaw.ai.data.Model
+import com.openclaw.ai.data.ModelDownloadStatus
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 
 interface ModelRepository {
 
-    val availableModels: StateFlow<List<ModelInfo>>
+    val availableModels: StateFlow<List<Model>>
 
-    val activeModel: StateFlow<ModelInfo?>
+    val activeModel: StateFlow<Model?>
 
     val downloadStatuses: StateFlow<Map<String, ModelDownloadStatus>>
 
     val downloadProgress: StateFlow<Map<String, Float>>
 
-    fun getModel(id: String): ModelInfo?
+    fun getModel(name: String): Model?
 
-    fun getLocalModels(): List<ModelInfo>
+    fun getLocalModels(): List<Model>
 
-    fun getCloudModels(): List<ModelInfo>
+    fun getCloudModels(): List<Model>
 
-    fun getDownloadedModels(): List<ModelInfo>
+    fun getDownloadedModels(): List<Model>
 
-    suspend fun setActiveModel(modelId: String)
+    suspend fun setActiveModel(modelName: String)
 
     suspend fun downloadModel(
-        model: ModelInfo,
+        model: Model,
         onProgress: (Float) -> Unit = {},
         onComplete: () -> Unit = {},
         onError: (String) -> Unit = {},
     )
 
-    suspend fun cancelDownload(modelId: String)
+    suspend fun cancelDownload(modelName: String)
 
-    suspend fun deleteDownloadedModel(modelId: String)
+    suspend fun deleteDownloadedModel(modelName: String)
 
-    suspend fun isModelDownloaded(modelId: String): Boolean
+    suspend fun isModelDownloaded(modelName: String): Boolean
 
-    fun observeDownloadProgress(modelId: String): Flow<Float>
+    fun observeDownloadProgress(modelName: String): Flow<Float>
 }
