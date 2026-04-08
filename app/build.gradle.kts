@@ -28,17 +28,17 @@ fun getVersionProps(): Properties {
 val props = getVersionProps()
 
 android {
-    namespace = "com.openclaw.ai"
+    namespace = "com.phoneclaw.ai"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.openclaw.ai"
+        applicationId = "com.phoneclaw.ai"
         minSdk = 31
         targetSdk = 35
         versionCode = props["VERSION_CODE"].toString().toInt()
         versionName = props["VERSION_NAME"].toString()
 
-        manifestPlaceholders["appAuthRedirectScheme"] = "com.openclaw.ai.auth"
+        manifestPlaceholders["appAuthRedirectScheme"] = "com.phoneclaw.ai.auth"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -75,7 +75,7 @@ android {
         val variant = this
         variant.outputs.all {
             val output = this as com.android.build.gradle.internal.api.BaseVariantOutputImpl
-            output.outputFileName = "Claw-Assistant-v${variant.versionName}-${variant.buildType.name}.apk"
+            output.outputFileName = "PhoneClaw-AI-v${variant.versionName}-${variant.buildType.name}.apk"
         }
     }
 

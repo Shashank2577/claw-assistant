@@ -32,9 +32,15 @@
   "hotPaths": [
     {
       "path": "",
-      "accessCount": 28,
-      "lastAccessed": 1775562813418,
+      "accessCount": 35,
+      "lastAccessed": 1775624474513,
       "type": "directory"
+    },
+    {
+      "path": "app/src/main/res/values/strings.xml",
+      "accessCount": 11,
+      "lastAccessed": 1775643445949,
+      "type": "file"
     },
     {
       "path": "app/src/main/java/com/openclaw/ai/data/model/ModelInfo.kt",
@@ -73,27 +79,27 @@
       "type": "file"
     },
     {
+      "path": "app/src/main/java/com/openclaw/ai/di/AppModule.kt",
+      "accessCount": 6,
+      "lastAccessed": 1775619656294,
+      "type": "file"
+    },
+    {
       "path": "app/src/main/java/com/openclaw/ai/data/db/entity/ConversationEntity.kt",
       "accessCount": 5,
       "lastAccessed": 1775561057043,
       "type": "file"
     },
     {
-      "path": "app/src/main/res/values/strings.xml",
+      "path": "app/src/main/java/com/openclaw/ai/data/model/ChatMessageData.kt",
       "accessCount": 5,
-      "lastAccessed": 1775563204077,
+      "lastAccessed": 1775619775538,
       "type": "file"
     },
     {
       "path": "app/src/main/java/com/openclaw/ai/data/repository/impl/SpaceRepositoryImpl.kt",
       "accessCount": 4,
       "lastAccessed": 1775560790737,
-      "type": "file"
-    },
-    {
-      "path": "app/src/main/java/com/openclaw/ai/data/model/ChatMessageData.kt",
-      "accessCount": 4,
-      "lastAccessed": 1775560986385,
       "type": "file"
     },
     {
@@ -115,9 +121,9 @@
       "type": "file"
     },
     {
-      "path": "app/src/main/java/com/openclaw/ai/di/AppModule.kt",
+      "path": "app/src/main/AndroidManifest.xml",
       "accessCount": 4,
-      "lastAccessed": 1775561483689,
+      "lastAccessed": 1775643451381,
       "type": "file"
     },
     {
@@ -148,6 +154,24 @@
       "path": "app/src/main/java/com/openclaw/ai/data/db/entity/MessageEntity.kt",
       "accessCount": 3,
       "lastAccessed": 1775560994437,
+      "type": "file"
+    },
+    {
+      "path": "app/src/main/java/com/openclaw/ai/data/db/AppDatabase.kt",
+      "accessCount": 3,
+      "lastAccessed": 1775619787202,
+      "type": "file"
+    },
+    {
+      "path": ".gallery-ref/Android/src/app/src/main/java/com/google/ai/edge/gallery/runtime/LlmModelHelper.kt",
+      "accessCount": 3,
+      "lastAccessed": 1775621195011,
+      "type": "file"
+    },
+    {
+      "path": ".gallery-ref/Android/src/app/src/main/java/com/google/ai/edge/gallery/data/DownloadRepository.kt",
+      "accessCount": 3,
+      "lastAccessed": 1775624564312,
       "type": "file"
     },
     {
@@ -184,18 +208,6 @@
       "path": "app/src/main/java/com/openclaw/ai/data/db/dao/PerChatSettingsDao.kt",
       "accessCount": 2,
       "lastAccessed": 1775560539201,
-      "type": "file"
-    },
-    {
-      "path": ".gallery-ref/Android/src/app/src/main/java/com/google/ai/edge/gallery/runtime/LlmModelHelper.kt",
-      "accessCount": 2,
-      "lastAccessed": 1775560557427,
-      "type": "file"
-    },
-    {
-      "path": ".gallery-ref/Android/src/app/src/main/java/com/google/ai/edge/gallery/data/DownloadRepository.kt",
-      "accessCount": 2,
-      "lastAccessed": 1775560572793,
       "type": "file"
     },
     {
@@ -259,12 +271,6 @@
       "type": "file"
     },
     {
-      "path": "app/src/main/AndroidManifest.xml",
-      "accessCount": 1,
-      "lastAccessed": 1775560351673,
-      "type": "file"
-    },
-    {
       "path": "app/proguard-rules.pro",
       "accessCount": 1,
       "lastAccessed": 1775560355045,
@@ -274,12 +280,6 @@
       "path": "app/src/main/res/values/themes.xml",
       "accessCount": 1,
       "lastAccessed": 1775560373977,
-      "type": "file"
-    },
-    {
-      "path": "app/src/main/java/com/openclaw/ai/data/db/AppDatabase.kt",
-      "accessCount": 1,
-      "lastAccessed": 1775560410550,
       "type": "file"
     },
     {

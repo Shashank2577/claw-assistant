@@ -777,7 +777,8 @@
                       "width": "fill_container",
                       "content": "Can you explain how transformer models handle attention mechanisms? I'm confused about multi-head attention.",
                       "fontFamily": "Inter",
-                      "fontSize": 14
+                      "fontSize": 14,
+                      "fontWeight": "normal"
                     }
                   ]
                 }
@@ -956,7 +957,8 @@
                       "content": "Great question! In transformers, the attention mechanism lets the model focus on different parts of the input sequence.\n\nMulti-head attention splits the computation into multiple 'heads', each learning different relationship patterns.",
                       "lineHeight": 1.5,
                       "fontFamily": "Inter",
-                      "fontSize": 13
+                      "fontSize": 13,
+                      "fontWeight": "normal"
                     },
                     {
                       "type": "frame",
@@ -981,7 +983,8 @@
                           "content": "Attention(Q,K,V) =\n  softmax(QK^T / √d_k)V",
                           "lineHeight": 1.4,
                           "fontFamily": "JetBrains Mono",
-                          "fontSize": 11
+                          "fontSize": 11,
+                          "fontWeight": "normal"
                         }
                       ]
                     }
@@ -1113,7 +1116,8 @@
                       "width": "fill_container",
                       "content": "Searching: \"transformer attention mechanism explained\"",
                       "fontFamily": "Inter",
-                      "fontSize": 11
+                      "fontSize": 11,
+                      "fontWeight": "normal"
                     }
                   ]
                 },
@@ -1223,7 +1227,8 @@
                       "width": "fill_container",
                       "content": "How does this scale with longer sequences?",
                       "fontFamily": "Inter",
-                      "fontSize": 14
+                      "fontSize": 14,
+                      "fontWeight": "normal"
                     }
                   ]
                 }
@@ -1537,7 +1542,8 @@
                   "fill": "$foreground-muted",
                   "content": "Ask me anything...",
                   "fontFamily": "Inter",
-                  "fontSize": 14
+                  "fontSize": 14,
+                  "fontWeight": "normal"
                 }
               ]
             },
@@ -2172,7 +2178,8 @@
                       "width": "fill_container",
                       "content": "Here are 5 quick pasta recipes...",
                       "fontFamily": "Inter",
-                      "fontSize": "$font-size-sm"
+                      "fontSize": "$font-size-sm",
+                      "fontWeight": "normal"
                     },
                     {
                       "type": "text",
@@ -2261,7 +2268,8 @@
                       "width": "fill_container",
                       "content": "Using asyncio with aiohttp for...",
                       "fontFamily": "Inter",
-                      "fontSize": "$font-size-sm"
+                      "fontSize": "$font-size-sm",
+                      "fontWeight": "normal"
                     },
                     {
                       "type": "text",
@@ -2350,7 +2358,8 @@
                       "width": "fill_container",
                       "content": "Best neighborhoods to stay in...",
                       "fontFamily": "Inter",
-                      "fontSize": "$font-size-sm"
+                      "fontSize": "$font-size-sm",
+                      "fontWeight": "normal"
                     },
                     {
                       "type": "text",
@@ -2439,7 +2448,8 @@
                       "width": "fill_container",
                       "content": "Quantum bits use superposition...",
                       "fontFamily": "Inter",
-                      "fontSize": "$font-size-sm"
+                      "fontSize": "$font-size-sm",
+                      "fontWeight": "normal"
                     },
                     {
                       "type": "text",
@@ -5996,7 +6006,8 @@
                           "fill": "$foreground-muted",
                           "content": "••••••••••••••••••sk-3f",
                           "fontFamily": "Inter",
-                          "fontSize": 14
+                          "fontSize": 14,
+                          "fontWeight": "normal"
                         }
                       ]
                     },
@@ -6072,7 +6083,8 @@
                       "fill": "$foreground-muted",
                       "content": "Keys are encrypted and stored locally",
                       "fontFamily": "Inter",
-                      "fontSize": 11
+                      "fontSize": 11,
+                      "fontWeight": "normal"
                     }
                   ]
                 }
@@ -7148,7 +7160,8 @@
                       "fill": "$foreground-muted",
                       "content": "Version 2.4.1 (Build 847)",
                       "fontFamily": "Inter",
-                      "fontSize": 12
+                      "fontSize": 12,
+                      "fontWeight": "normal"
                     }
                   ]
                 },
@@ -7435,7 +7448,8 @@
                   "lineHeight": 1.5,
                   "textAlign": "center",
                   "fontFamily": "Inter",
-                  "fontSize": 15
+                  "fontSize": 15,
+                  "fontWeight": "normal"
                 }
               ]
             },
@@ -12391,7 +12405,7 @@
     },
     "foreground-muted": {
       "type": "color",
-      "value": "#8E8A95"
+      "value": "#635F69"
     },
     "foreground-primary": {
       "type": "color",
@@ -12556,6 +12570,46 @@
     "surface-pressed": {
       "type": "color",
       "value": "#E5E1EF"
+    },
+    "radius-button": {
+      "type": "number",
+      "value": 20
+    },
+    "radius-card": {
+      "type": "number",
+      "value": 32
+    },
+    "radius-hero": {
+      "type": "number",
+      "value": 60
+    },
+    "radius-medium": {
+      "type": "number",
+      "value": 24
+    },
+    "shadow-deep-color": {
+      "type": "color",
+      "value": "#CDC6D9"
+    },
+    "shadow-drop-color": {
+      "type": "color",
+      "value": "#A096B433"
+    },
+    "shadow-highlight-color": {
+      "type": "color",
+      "value": "#FFFFFFE6"
+    },
+    "shadow-inner-bounce": {
+      "type": "color",
+      "value": "#8B5CF60D"
+    },
+    "shadow-inner-rim": {
+      "type": "color",
+      "value": "#FFFFFFFF"
+    },
+    "shadow-light-color": {
+      "type": "color",
+      "value": "#FFFFFF"
     }
   }
 }
