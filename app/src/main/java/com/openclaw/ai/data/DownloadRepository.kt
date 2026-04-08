@@ -178,7 +178,7 @@ class DefaultDownloadRepository(
     )
 
     val builder = NotificationCompat.Builder(context, channelId)
-        .setSmallIcon(R.drawable.ic_launcher_foreground)
+        .setSmallIcon(R.mipmap.ic_launcher)
         .setContentTitle("Model Download Complete")
         .setContentText("${model.displayName} has been downloaded and is ready to use.")
         .setPriority(NotificationCompat.PRIORITY_DEFAULT)
