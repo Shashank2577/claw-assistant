@@ -58,7 +58,7 @@ jobs:
           name: Release ${{ env.VERSION_NAME }}
           draft: false
           prerelease: false
-          files: app/build/outputs/apk/debug/OpenClaw-AI-*.apk
+          files: app/build/outputs/apk/debug/Claw-Assistant-*.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
