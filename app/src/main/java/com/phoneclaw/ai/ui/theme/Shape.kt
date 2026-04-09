@@ -4,35 +4,40 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Shapes
 import androidx.compose.ui.unit.dp
 
-/** Material3 shape scale. */
+/** Material3 shape scale (Claymorphism style). */
 val AppShapes = Shapes(
-    extraSmall = RoundedCornerShape(4.dp),
-    small = RoundedCornerShape(8.dp),
-    medium = RoundedCornerShape(12.dp),
-    large = RoundedCornerShape(16.dp),
-    extraLarge = RoundedCornerShape(28.dp),
+    extraSmall = RoundedCornerShape(12.dp),
+    small = RoundedCornerShape(16.dp),
+    medium = RoundedCornerShape(20.dp),
+    large = RoundedCornerShape(28.dp),
+    extraLarge = RoundedCornerShape(32.dp),
 )
+
+// Claymorphism specific shapes
+val ClayCardShape = RoundedCornerShape(32.dp)
+val ClayButtonShape = RoundedCornerShape(20.dp)
+val ClayInputShape = RoundedCornerShape(16.dp)
+val ClayContainerShape = RoundedCornerShape(48.dp)
+val ClayChipShape = RoundedCornerShape(20.dp)
 
 /**
  * Chat bubble shape for the user side.
- * Full rounding on top-left / top-right / bottom-left; tight bottom-right to
- * indicate message origin.
+ * Updated for Claymorphism: 16dp corners except for the origin corner.
  */
 val UserBubbleShape = RoundedCornerShape(
-    topStart = 12.dp,
-    topEnd = 12.dp,
-    bottomStart = 12.dp,
+    topStart = 16.dp,
+    topEnd = 16.dp,
+    bottomStart = 16.dp,
     bottomEnd = 4.dp,
 )
 
 /**
  * Chat bubble shape for the assistant side.
- * Full rounding on top-left / top-right / bottom-right; tight bottom-left to
- * indicate message origin.
+ * Updated for Claymorphism: 16dp corners except for the origin corner.
  */
 val AssistantBubbleShape = RoundedCornerShape(
-    topStart = 12.dp,
-    topEnd = 12.dp,
+    topStart = 16.dp,
+    topEnd = 16.dp,
     bottomStart = 4.dp,
-    bottomEnd = 12.dp,
+    bottomEnd = 16.dp,
 )
