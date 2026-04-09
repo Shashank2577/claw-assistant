@@ -44,6 +44,7 @@ fun ModelPickerSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         containerColor = CanvasBg,
+        shape = ClayCardShape,
     ) {
         Column(
             modifier = Modifier

@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -12,9 +13,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.SmartToy
 import androidx.compose.material.icons.rounded.Wifi
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -28,10 +32,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import kotlin.math.roundToInt
 
 private val Green500 = Color(0xFF10B981)
@@ -92,7 +98,7 @@ fun ModelDownloadStep(
                 Text(
                     text = "Skip for Now",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = Purple600,
+                    color = Color(0xFF7C3AED),
                 )
             }
         }
@@ -108,11 +114,11 @@ private fun GemmaModelCard(
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.large,
+        shape = RoundedCornerShape(32.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface,
+            containerColor = Color.White.copy(alpha = 0.8f),
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
     ) {
         Column(
             modifier = Modifier
@@ -127,7 +133,7 @@ private fun GemmaModelCard(
                 modifier = Modifier
                     .size(48.dp)
                     .clip(CircleShape)
-                    .background(Green500),
+                    .background(Color(0xFF10B981)),
             ) {
                 Icon(
                     imageVector = Icons.Rounded.SmartToy,
@@ -167,11 +173,11 @@ private fun GemmaModelCard(
                         },
                         colors = SuggestionChipDefaults.suggestionChipColors(
                             containerColor = Color.Transparent,
-                            labelColor = Green500,
+                            labelColor = Color(0xFF10B981),
                         ),
                         border = SuggestionChipDefaults.suggestionChipBorder(
                             enabled = true,
-                            borderColor = Green500,
+                            borderColor = Color(0xFF10B981),
                             borderWidth = 1.dp,
                         ),
                     )
@@ -201,21 +207,27 @@ private fun GemmaModelCard(
                     LinearProgressIndicator(
                         progress = { downloadProgress },
                         modifier = Modifier.fillMaxWidth(),
-                        color = Purple600,
+                        color = Color(0xFF7C3AED),
                         trackColor = MaterialTheme.colorScheme.surfaceVariant
                     )
                 }
             } else {
-                TextButton(
+                Button(
                     onClick = onDownload,
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().height(56.dp),
+                    shape = RoundedCornerShape(20.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+                    contentPadding = PaddingValues(0.dp),
                 ) {
-                    Text(
-                        text = "Download",
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.SemiBold,
-                        color = Purple600,
-                    )
+                    Box(
+                        modifier = Modifier.fillMaxSize().background(
+                            brush = Brush.linearGradient(listOf(Color(0xFFA78BFA), Color(0xFF7C3AED))),
+                            shape = RoundedCornerShape(20.dp)
+                        ),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text("Download", color = Color.White, fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+                    }
                 }
             }
         }
