@@ -302,16 +302,16 @@ private fun ClaymorphicInputBar(
             // Trailing action button: Stop / Send / Mic
             AnimatedContent(
                 targetState = when {
-                    isStreaming -> TrailingAction.STOP
-                    text.isNotBlank() -> TrailingAction.SEND
-                    else -> TrailingAction.MIC
+                    isStreaming -> ClaymorphicTrailingAction.STOP
+                    text.isNotBlank() -> ClaymorphicTrailingAction.SEND
+                    else -> ClaymorphicTrailingAction.MIC
                 },
                 transitionSpec = { fadeIn() togetherWith fadeOut() },
                 label = "trailing_action",
                 modifier = Modifier.align(Alignment.Bottom),
             ) { action ->
                 when (action) {
-                    TrailingAction.STOP -> FilledIconButton(
+                    ClaymorphicTrailingAction.STOP -> FilledIconButton(
                         onClick = onStop,
                         modifier = Modifier.defaultMinSize(minWidth = 48.dp, minHeight = 48.dp),
                         colors = IconButtonDefaults.filledIconButtonColors(
@@ -326,7 +326,7 @@ private fun ClaymorphicInputBar(
                     }
 
                     // Send Button with gradient
-                    TrailingAction.SEND -> Box(
+                    ClaymorphicTrailingAction.SEND -> Box(
                         modifier = Modifier
                             .defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
                             .clip(RoundedCornerShape(16.dp))
@@ -343,7 +343,7 @@ private fun ClaymorphicInputBar(
                     }
 
                     // Mic
-                    TrailingAction.MIC -> IconButton(
+                    ClaymorphicTrailingAction.MIC -> IconButton(
                         onClick = onVoiceToggle,
                         modifier = Modifier.defaultMinSize(minWidth = 48.dp, minHeight = 48.dp),
                     ) {
@@ -360,7 +360,7 @@ private fun ClaymorphicInputBar(
     }
 }
 
-private enum class TrailingAction { STOP, SEND, MIC }
+private enum class ClaymorphicTrailingAction { STOP, SEND, MIC }
 
 @Composable
 private fun ChatTopBar(
