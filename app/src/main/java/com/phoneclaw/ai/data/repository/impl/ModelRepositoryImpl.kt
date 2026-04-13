@@ -48,7 +48,7 @@ class ModelRepositoryImpl @Inject constructor(
             try {
                 val jsonString = context.assets.open("model_allowlist.json").bufferedReader().use { it.readText() }
                 val allowlist = gson.fromJson(jsonString, ModelAllowlist::class.java)
-                val models = allowlist.models.filter { it.disabled != true }.map { it.toModel() }
+                val models = allowlist.models.filter { it.disabled != true }.map { it.toModel().also { m -> m.preProcess() } }
                 
                 // Add cloud models
                 val cloudModels = listOf(

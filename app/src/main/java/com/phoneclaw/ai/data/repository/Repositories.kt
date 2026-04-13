@@ -59,8 +59,3 @@ interface SettingsRepository {
     suspend fun deletePerChatSettings(conversationId: String)
 }
 
-interface DownloadRepository {
-    fun downloadModel(model: Model)
-    fun cancelDownload(modelName: String)
-    fun getDownloadStatus(modelId: String): Flow<ModelDownloadStatus>
-}

@@ -37,4 +37,10 @@ class ModelPickerViewModel @Inject constructor(
             modelRepository.setActiveModel(modelName)
         }
     }
+
+    fun downloadModel(model: Model) {
+        viewModelScope.launch {
+            modelRepository.downloadModel(model)
+        }
+    }
 }

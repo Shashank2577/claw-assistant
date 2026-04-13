@@ -237,7 +237,7 @@ class DownloadWorker(context: Context, params: WorkerParameters) :
                 )
                 setForeground(
                   createForegroundInfo(
-                    progress = (downloadedBytes * 100 / totalBytes).toInt(),
+                    progress = if (totalBytes > 0) (downloadedBytes * 100 / totalBytes).toInt() else 0,
                     modelName = modelName,
                   )
                 )

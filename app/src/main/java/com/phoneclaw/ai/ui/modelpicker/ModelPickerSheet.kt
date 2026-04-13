@@ -71,17 +71,19 @@ fun ModelPickerSheet(
             if (localModels.isNotEmpty()) {
                 SectionLabel(label = "ON-DEVICE MODELS")
                 localModels.forEach { model: Model ->
+                    val status = downloadStatuses[model.name] ?: ModelDownloadStatus(status = NOT_DOWNLOADED)
                     ClayModelItem(
                         model = model,
                         isActive = model.name == activeModelId,
-                        downloadStatus = downloadStatuses[model.name] ?: ModelDownloadStatus(status = NOT_DOWNLOADED),
+                        downloadStatus = status,
                         downloadProgress = downloadProgress[model.name] ?: 0f,
                         onSelect = {
-                            viewModel.selectModel(model.name)
-                            if (downloadStatuses[model.name]?.status == SUCCEEDED) {
+                            if (status.status == SUCCEEDED) {
+                                viewModel.selectModel(model.name)
                                 onDismiss()
                             }
                         },
+                        onDownload = { viewModel.downloadModel(model) },
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                     )
                 }
@@ -155,10 +157,12 @@ private fun ClayModelItem(
     downloadStatus: ModelDownloadStatus,
     downloadProgress: Float,
     onSelect: () -> Unit,
+    onDownload: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val isDownloadable = downloadStatus.status == NOT_DOWNLOADED || downloadStatus.status == FAILED
     Surface(
-        onClick = onSelect,
+        onClick = if (isDownloadable) onDownload else onSelect,
         shape = RoundedCornerShape(32.dp),
         color = if (isActive) Color.White.copy(alpha = 0.95f) else Color.White.copy(alpha = 0.8f),
         shadowElevation = 0.dp,
@@ -186,30 +190,39 @@ private fun ClayModelItem(
                             )
                     )
                     Spacer(modifier = Modifier.width(12.dp))
-                    Text(
-                        text = model.displayName.ifEmpty { model.name },
-                        style = MaterialTheme.typography.bodyLarge.copy(
-                            fontWeight = FontWeight.Bold,
-                            fontFamily = NunitoFontFamily
-                        ),
-                        color = ForegroundPrimary
-                    )
+                    Column {
+                        Text(
+                            text = model.displayName.ifEmpty { model.name },
+                            style = MaterialTheme.typography.bodyLarge.copy(
+                                fontWeight = FontWeight.Bold,
+                                fontFamily = NunitoFontFamily
+                            ),
+                            color = ForegroundPrimary
+                        )
+                        if (isDownloadable) {
+                            Text(
+                                text = "Tap to download",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = AccentViolet,
+                            )
+                        }
+                    }
                 }
 
-                if (isActive) {
-                    Icon(
+                when {
+                    isActive -> Icon(
                         imageVector = Icons.Rounded.CheckCircle,
                         contentDescription = "Active",
                         tint = AccentViolet,
                         modifier = Modifier.size(20.dp)
                     )
-                } else if (downloadStatus.status == NOT_DOWNLOADED) {
-                    Icon(
+                    isDownloadable -> Icon(
                         imageVector = Icons.Rounded.CloudDownload,
-                        contentDescription = "Not Downloaded",
-                        tint = ForegroundMuted,
+                        contentDescription = "Download",
+                        tint = AccentViolet,
                         modifier = Modifier.size(20.dp)
                     )
+                    else -> {}
                 }
             }
 
