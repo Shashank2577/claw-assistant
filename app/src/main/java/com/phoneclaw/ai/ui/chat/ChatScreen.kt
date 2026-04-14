@@ -135,7 +135,7 @@ fun ChatScreen(
         containerColor = CanvasBg,
         topBar = {
             Column(modifier = Modifier.background(CanvasBg)) {
-                Spacer(modifier = Modifier.height(20.dp))
+                Spacer(modifier = Modifier.windowInsetsTopHeight(WindowInsets.statusBars))
                 ChatTopBar(
                     title = if (conversationTitle.isEmpty()) "New Conversation" else conversationTitle,
                     modelName = currentModel?.displayName ?: "Select Model",
@@ -407,24 +407,20 @@ private fun ChatTopBar(
             modifier = Modifier.weight(1f).padding(horizontal = 12.dp)
         )
 
-        Surface(
-            onClick = onModelClick,
-            shape = RoundedCornerShape(24.dp),
-            modifier = Modifier.height(36.dp),
-            color = Color.Transparent
-        ) {
-            Row(
-                modifier = Modifier
-                    .background(
-                        brush = Brush.linearGradient(
-                            colors = listOf(AccentViolet, AccentVioletLight)
-                        ),
-                        shape = RoundedCornerShape(24.dp)
+        Row(
+            modifier = Modifier
+                .height(36.dp)
+                .clip(RoundedCornerShape(24.dp))
+                .background(
+                    brush = Brush.linearGradient(
+                        colors = listOf(AccentViolet, AccentVioletLight)
                     )
-                    .padding(horizontal = 14.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
+                )
+                .clickable(onClick = onModelClick)
+                .padding(horizontal = 14.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
                 Icon(
                     imageVector = Icons.Rounded.AutoAwesome,
                     contentDescription = null,
@@ -440,7 +436,6 @@ private fun ChatTopBar(
                     color = ForegroundInverse
                 )
             }
-        }
     }
 }
 

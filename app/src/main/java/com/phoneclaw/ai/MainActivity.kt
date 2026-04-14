@@ -22,6 +22,8 @@ import androidx.navigation.compose.rememberNavController
 import com.phoneclaw.ai.data.repository.ThemeMode
 import com.phoneclaw.ai.ui.chat.ChatScreen
 import com.phoneclaw.ai.ui.common.AppNavigationDrawer
+import com.phoneclaw.ai.ui.drawer.DrawerViewModel
+import com.phoneclaw.ai.ui.filebrowser.FileBrowserScreen
 import com.phoneclaw.ai.ui.modelpicker.ModelPickerSheet
 import com.phoneclaw.ai.ui.onboarding.OnboardingScreen
 import com.phoneclaw.ai.ui.settings.PerChatSettingsSheet
@@ -73,6 +75,8 @@ private fun MainContent(mainViewModel: MainViewModel) {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     val currentConversationId by mainViewModel.currentConversationId.collectAsStateWithLifecycle()
+    val drawerViewModel: DrawerViewModel = hiltViewModel()
+    val drawerUiState by drawerViewModel.uiState.collectAsStateWithLifecycle()
 
     var activeBottomSheet by remember { mutableStateOf<BottomSheet?>(null) }
 
@@ -97,6 +101,17 @@ private fun MainContent(mainViewModel: MainViewModel) {
                 },
                 onSettingsClick = {
                     navController.navigate("settings")
+                    scope.launch { drawerState.close() }
+                },
+                onVoiceClick = {
+                    navController.navigate("VoiceConversation")
+                    scope.launch { drawerState.close() }
+                },
+                onFilesClick = {
+                    val spaceId = drawerUiState.currentSpaceId ?: "default"
+                    val space = drawerUiState.spaces.firstOrNull { it.id == spaceId }
+                    val spaceName = space?.name ?: "Files"
+                    navController.navigate("FileBrowser/$spaceId/$spaceName")
                     scope.launch { drawerState.close() }
                 }
             )
@@ -129,6 +144,15 @@ private fun MainContent(mainViewModel: MainViewModel) {
             }
             composable("settings") {
                 SettingsScreen(onBack = { navController.popBackStack() })
+            }
+            composable("FileBrowser/{spaceId}/{spaceName}") { backStackEntry ->
+                val spaceId = backStackEntry.arguments?.getString("spaceId") ?: ""
+                val spaceName = backStackEntry.arguments?.getString("spaceName") ?: "Files"
+                FileBrowserScreen(
+                    spaceId = spaceId,
+                    spaceName = spaceName,
+                    onBack = { navController.popBackStack() }
+                )
             }
         }
     }
