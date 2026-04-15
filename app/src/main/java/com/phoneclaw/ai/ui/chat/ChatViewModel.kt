@@ -199,8 +199,8 @@ class ChatViewModel @Inject constructor(
                         )
                     },
                     systemInstruction = if (selectedSkills.isEmpty()) null else skillManagerViewModel.getSystemPrompt("You are a helpful AI assistant with access to tools."),
-                    tools = listOf(tool(agentTools)),
-                    enableConversationConstrainedDecoding = true,
+                    tools = if (selectedSkills.isEmpty()) emptyList() else listOf(tool(agentTools)),
+                    enableConversationConstrainedDecoding = selectedSkills.isNotEmpty(),
                     coroutineScope = viewModelScope
                 )
             } else {
