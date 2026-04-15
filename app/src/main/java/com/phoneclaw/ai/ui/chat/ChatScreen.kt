@@ -42,6 +42,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.phoneclaw.ai.common.AskInfoAgentAction
 import com.phoneclaw.ai.common.CallJsAgentAction
+import com.phoneclaw.ai.common.RequestPermissionAgentAction
 import com.phoneclaw.ai.common.SkillProgressAgentAction
 import com.phoneclaw.ai.ui.common.BaseOpenClawWebViewClient
 import com.phoneclaw.ai.ui.common.EmptyState
@@ -101,7 +102,20 @@ fun ChatScreen(
         }
     }
 
+    // Runtime permission launcher for native skills
+    var currentPermissionAction by remember { mutableStateOf<RequestPermissionAgentAction?>(null) }
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        currentPermissionAction?.result?.complete(granted)
+        currentPermissionAction = null
+    }
+    LaunchedEffect(currentPermissionAction) {
+        currentPermissionAction?.let { permissionLauncher.launch(it.permission) }
+    }
+
     // Agent Skills State
+    var showSkillManager by remember { mutableStateOf(false) }
     var showAskInfoDialog by remember { mutableStateOf(false) }
     var currentAskInfoAction by remember { mutableStateOf<AskInfoAgentAction?>(null) }
     var askInfoInputValue by remember { mutableStateOf("") }
@@ -131,7 +145,7 @@ fun ChatScreen(
                           (async function() {
                               var startTs = Date.now();
                               while(true) {
-                                if (typeof openclaw_get_result === 'function') {
+                                if (typeof ai_edge_gallery_get_result === 'function') {
                                   break;
                                 }
                                 await new Promise(resolve=>{
@@ -141,7 +155,7 @@ fun ChatScreen(
                                   break;
                                 }
                               }
-                              var result = await openclaw_get_result(`${action.data}`, `${action.secret}`);
+                              var result = await ai_edge_gallery_get_result(`${action.data}`, `${action.secret}`);
                               OpenClawBridge.onResultReady(result);
                           })()
                         """.trimIndent()
@@ -154,6 +168,9 @@ fun ChatScreen(
                     currentAskInfoAction = action
                     askInfoInputValue = ""
                     showAskInfoDialog = true
+                }
+                is RequestPermissionAgentAction -> {
+                    currentPermissionAction = action
                 }
                 is SkillProgressAgentAction -> {
                     // Update progress in UI if needed
@@ -193,10 +210,12 @@ fun ChatScreen(
                     }
                     ChatMode.AGENT -> {
                         AgentSkillChipsSection(
+                            skillManagerViewModel = viewModel.skillManagerViewModel,
                             onChipClick = { prompt ->
                                 viewModel.sendMessage(prompt)
                                 focusManager.clearFocus()
-                            }
+                            },
+                            onManageSkills = { showSkillManager = true },
                         )
                     }
                 }
@@ -360,6 +379,16 @@ fun ChatScreen(
             }
         )
     }
+
+    if (showSkillManager) {
+        SkillManagerBottomSheet(
+            skillManagerViewModel = viewModel.skillManagerViewModel,
+            onDismiss = { skillsChanged ->
+                showSkillManager = false
+                if (skillsChanged) viewModel.preloadModel()
+            },
+        )
+    }
 }
 
 @Composable
@@ -406,17 +435,11 @@ private fun ModeSwitcherRow(
 }
 
 @Composable
-private fun AgentSkillChipsSection(onChipClick: (String) -> Unit) {
-    val tryOutChips = listOf(
-        "Interactive Map" to "Show me Googleplex on interactive map",
-        "Kitchen Adventure" to "Start kitchen adventure",
-        "Calculate Hash" to "What is the sha1 hash of 'gemma'?",
-        "Text Spinner" to "Spin 'Gemma' on my head",
-        "Send Email" to "Send email 'Good morning' to abc@example.com with subject 'Hello'",
-        "Track Mood" to "Track my mood today",
-        "Wikipedia" to "Check Wikipedia about Oscars 2026",
-        "QR Code" to "Generate QR code for https://gemma.google.com",
-    )
+private fun AgentSkillChipsSection(
+    skillManagerViewModel: com.phoneclaw.ai.customtasks.agentchat.SkillManagerViewModel,
+    onChipClick: (String) -> Unit,
+    onManageSkills: () -> Unit,
+) {
     Column(modifier = Modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier
@@ -424,30 +447,52 @@ private fun AgentSkillChipsSection(onChipClick: (String) -> Unit) {
                 .horizontalScroll(rememberScrollState())
                 .padding(horizontal = 12.dp, vertical = 6.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            tryOutChips.forEach { (label, prompt) ->
+            com.phoneclaw.ai.customtasks.agentchat.TRYOUT_CHIPS.forEach { chip ->
                 Surface(
-                    onClick = { onChipClick(prompt) },
+                    onClick = { onChipClick(chip.prompt) },
                     shape = RoundedCornerShape(24.dp),
                     color = AccentPink,
                     modifier = Modifier.height(32.dp),
                 ) {
-                    Box(
-                        modifier = Modifier.padding(horizontal = 12.dp),
-                        contentAlignment = Alignment.Center,
+                    Row(
+                        modifier = Modifier.padding(horizontal = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
                     ) {
-                        Text(label, style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold, fontSize = 11.sp), color = ForegroundInverse)
+                        Icon(chip.icon, null, tint = ForegroundInverse, modifier = Modifier.size(13.dp))
+                        Text(chip.label, style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold, fontSize = 11.sp), color = ForegroundInverse)
                     }
                 }
             }
         }
         Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 2.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(Icons.Outlined.Info, null, tint = ForegroundMuted, modifier = Modifier.size(14.dp))
             Spacer(Modifier.width(4.dp))
-            Text("Agent mode uses AI skills. Skills must be downloaded to work.", style = MaterialTheme.typography.bodySmall, color = ForegroundMuted)
+            Text(
+                "Agent mode uses AI skills.",
+                style = MaterialTheme.typography.bodySmall,
+                color = ForegroundMuted,
+                modifier = Modifier.weight(1f),
+            )
+            Surface(
+                onClick = onManageSkills,
+                shape = RoundedCornerShape(8.dp),
+                color = SurfaceVioletCard,
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    Icon(Icons.Outlined.Settings, null, tint = AccentViolet, modifier = Modifier.size(13.dp))
+                    Text("Manage Skills", style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold, fontSize = 11.sp), color = AccentViolet)
+                }
+            }
         }
     }
 }

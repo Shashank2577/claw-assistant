@@ -140,6 +140,7 @@ dependencies {
     // Networking
     implementation(libs.okhttp)
     implementation(libs.okhttp.sse)
+    implementation("org.jsoup:jsoup:1.17.2")
 
     // Image loading
     implementation(libs.coil.compose)

@@ -33,6 +33,27 @@ data class SendEmailParams(
 @JsonClass(generateAdapter = true)
 data class SendSmsParams(val phone_number: String, val sms_body: String)
 
+@JsonClass(generateAdapter = true)
+data class MakeCallParams(val phone_number: String)
+
+@JsonClass(generateAdapter = true)
+data class SetAlarmParams(val hour: Int, val minute: Int, val message: String = "")
+
+@JsonClass(generateAdapter = true)
+data class OpenAppParams(val package_name: String)
+
+@JsonClass(generateAdapter = true)
+data class OpenUrlParams(val url: String)
+
+@JsonClass(generateAdapter = true)
+data class WriteCalendarParams(
+  val title: String,
+  val begin_time: Long,
+  val end_time: Long,
+  val location: String = "",
+  val description: String = "",
+)
+
 object IntentHandler {
   private const val TAG = "IntentHandler"
 
@@ -77,6 +98,94 @@ object IntentHandler {
         }
       } catch (e: Exception) {
         Log.e(TAG, "Failed to parse send_sms parameters: $parameters", e)
+        return false
+      }
+    } else if (action == "make_call") {
+      try {
+        val moshi = Moshi.Builder().build()
+        val params = moshi.adapter(MakeCallParams::class.java).fromJson(parameters)
+        if (params != null) {
+          val intent = Intent(Intent.ACTION_DIAL, "tel:${params.phone_number}".toUri()).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+          context.startActivity(intent)
+          return true
+        }
+        return false
+      } catch (e: Exception) {
+        Log.e(TAG, "Failed to parse make_call parameters: $parameters", e)
+        return false
+      }
+    } else if (action == "set_alarm") {
+      try {
+        val moshi = Moshi.Builder().build()
+        val params = moshi.adapter(SetAlarmParams::class.java).fromJson(parameters)
+        if (params != null) {
+          val intent = Intent(android.provider.AlarmClock.ACTION_SET_ALARM).apply {
+            putExtra(android.provider.AlarmClock.EXTRA_HOUR, params.hour)
+            putExtra(android.provider.AlarmClock.EXTRA_MINUTES, params.minute)
+            putExtra(android.provider.AlarmClock.EXTRA_MESSAGE, params.message)
+            putExtra(android.provider.AlarmClock.EXTRA_SKIP_UI, false)
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+          }
+          context.startActivity(intent)
+          return true
+        }
+        return false
+      } catch (e: Exception) {
+        Log.e(TAG, "Failed to parse set_alarm parameters: $parameters", e)
+        return false
+      }
+    } else if (action == "open_app") {
+      try {
+        val moshi = Moshi.Builder().build()
+        val params = moshi.adapter(OpenAppParams::class.java).fromJson(parameters)
+        if (params != null) {
+          val intent = context.packageManager.getLaunchIntentForPackage(params.package_name)
+            ?.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+          if (intent != null) {
+            context.startActivity(intent)
+            return true
+          }
+          Log.e(TAG, "App not found: ${params.package_name}")
+          return false
+        }
+        return false
+      } catch (e: Exception) {
+        Log.e(TAG, "Failed to parse open_app parameters: $parameters", e)
+        return false
+      }
+    } else if (action == "open_url") {
+      try {
+        val moshi = Moshi.Builder().build()
+        val params = moshi.adapter(OpenUrlParams::class.java).fromJson(parameters)
+        if (params != null) {
+          val intent = Intent(Intent.ACTION_VIEW, params.url.toUri()).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+          context.startActivity(intent)
+          return true
+        }
+        return false
+      } catch (e: Exception) {
+        Log.e(TAG, "Failed to parse open_url parameters: $parameters", e)
+        return false
+      }
+    } else if (action == "write_calendar") {
+      try {
+        val moshi = Moshi.Builder().build()
+        val params = moshi.adapter(WriteCalendarParams::class.java).fromJson(parameters)
+        if (params != null) {
+          val intent = Intent(Intent.ACTION_INSERT, android.provider.CalendarContract.Events.CONTENT_URI).apply {
+            putExtra(android.provider.CalendarContract.EXTRA_EVENT_BEGIN_TIME, params.begin_time)
+            putExtra(android.provider.CalendarContract.EXTRA_EVENT_END_TIME, params.end_time)
+            putExtra(android.provider.CalendarContract.Events.TITLE, params.title)
+            putExtra(android.provider.CalendarContract.Events.EVENT_LOCATION, params.location)
+            putExtra(android.provider.CalendarContract.Events.DESCRIPTION, params.description)
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+          }
+          context.startActivity(intent)
+          return true
+        }
+        return false
+      } catch (e: Exception) {
+        Log.e(TAG, "Failed to parse write_calendar parameters: $parameters", e)
         return false
       }
     }

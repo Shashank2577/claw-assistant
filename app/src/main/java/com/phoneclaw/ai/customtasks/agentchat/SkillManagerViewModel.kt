@@ -49,6 +49,36 @@ val TRYOUT_CHIPS: List<SkillTryOutChip> =
       prompt = "Check Wikipedia about Oscars 2026. Tell me who won the best picture.",
       skillName = "query-wikipedia",
     ),
+    SkillTryOutChip(
+      icon = Icons.Outlined.Contacts,
+      label = "Read Contacts",
+      prompt = "Show me my contacts.",
+      skillName = "phone-contacts",
+    ),
+    SkillTryOutChip(
+      icon = Icons.Outlined.CalendarToday,
+      label = "My Calendar",
+      prompt = "What events do I have this week?",
+      skillName = "calendar-manager",
+    ),
+    SkillTryOutChip(
+      icon = Icons.Outlined.Alarm,
+      label = "Set Alarm",
+      prompt = "Set an alarm for 7:30 AM tomorrow.",
+      skillName = "alarm-clock",
+    ),
+    SkillTryOutChip(
+      icon = Icons.Outlined.Apps,
+      label = "Open App",
+      prompt = "Open YouTube.",
+      skillName = "app-launcher",
+    ),
+    SkillTryOutChip(
+      icon = Icons.Outlined.Language,
+      label = "Browse Link",
+      prompt = "What is on https://en.wikipedia.org/wiki/Kotlin_(programming_language) ? Give me a summary.",
+      skillName = "web-browser",
+    ),
   )
 
 data class SkillState(val skill: Skill)
@@ -245,6 +275,135 @@ constructor(
 
   fun setLoading(loading: Boolean) {
     _uiState.update { it.copy(loading = loading) }
+  }
+
+  fun setSkillSelected(skill: SkillState, selected: Boolean) {
+    viewModelScope.launch(Dispatchers.IO) {
+      dataStoreRepository.setSkillSelected(skill.skill, selected)
+      _uiState.update { currentState ->
+        currentState.copy(
+          skills = currentState.skills.map {
+            if (it.skill.name == skill.skill.name) {
+              SkillState(skill = it.skill.toBuilder().setSelected(selected).build())
+            } else it
+          }
+        )
+      }
+    }
+  }
+
+  fun setAllSkillsSelected(selected: Boolean) {
+    viewModelScope.launch(Dispatchers.IO) {
+      val currentSkills = _uiState.value.skills
+      currentSkills.forEach { skillState ->
+        dataStoreRepository.setSkillSelected(skillState.skill, selected)
+      }
+      _uiState.update { currentState ->
+        currentState.copy(
+          skills = currentState.skills.map { skillState ->
+            SkillState(skill = skillState.skill.toBuilder().setSelected(selected).build())
+          }
+        )
+      }
+    }
+  }
+
+  fun deleteSkill(name: String) {
+    viewModelScope.launch(Dispatchers.IO) {
+      dataStoreRepository.deleteSkill(name)
+      _uiState.update { currentState ->
+        currentState.copy(skills = currentState.skills.filter { it.skill.name != name })
+      }
+    }
+  }
+
+  fun deleteSkills(names: Set<String>) {
+    viewModelScope.launch(Dispatchers.IO) {
+      dataStoreRepository.deleteSkills(names)
+      _uiState.update { currentState ->
+        currentState.copy(skills = currentState.skills.filter { it.skill.name !in names })
+      }
+    }
+  }
+
+  fun addSkill(skill: Skill, addToDataStore: Boolean = true) {
+    viewModelScope.launch(Dispatchers.IO) {
+      if (addToDataStore) {
+        dataStoreRepository.addSkill(skill)
+      }
+      _uiState.update { currentState ->
+        if (currentState.skills.none { it.skill.name == skill.name }) {
+          currentState.copy(skills = currentState.skills + SkillState(skill = skill))
+        } else {
+          currentState
+        }
+      }
+    }
+  }
+
+  fun setValidationError(error: String?) {
+    _uiState.update { it.copy(validationError = error) }
+  }
+
+  fun importSkillFromUrl(url: String, onDone: (Skill?, String?) -> Unit) {
+    _uiState.update { it.copy(validating = true, validationError = null) }
+    viewModelScope.launch(Dispatchers.IO) {
+      try {
+        val mdContent = java.net.URL(url).readText()
+        val (skill, errors) = convertSkillMdToProto(
+          mdContent = mdContent,
+          builtIn = false,
+          selected = true,
+          skillUrl = url.substringBeforeLast("/"),
+        )
+        if (errors.isNotEmpty() || skill == null) {
+          val errorMsg = errors.joinToString(", ")
+          _uiState.update { it.copy(validating = false, validationError = errorMsg) }
+          withContext(Dispatchers.Main) { onDone(null, errorMsg) }
+        } else {
+          addSkill(skill)
+          _uiState.update { it.copy(validating = false, validationError = null) }
+          withContext(Dispatchers.Main) { onDone(skill, null) }
+        }
+      } catch (e: Exception) {
+        val errorMsg = "Failed to fetch URL: ${e.message}"
+        _uiState.update { it.copy(validating = false, validationError = errorMsg) }
+        withContext(Dispatchers.Main) { onDone(null, errorMsg) }
+      }
+    }
+  }
+
+  fun importSkillFromLocalUri(uri: Uri, onDone: (Skill?, String?) -> Unit) {
+    _uiState.update { it.copy(validating = true, validationError = null) }
+    viewModelScope.launch(Dispatchers.IO) {
+      try {
+        val mdContent = context.contentResolver.openInputStream(uri)?.bufferedReader()?.readText()
+          ?: run {
+            val errorMsg = "Failed to read file"
+            _uiState.update { it.copy(validating = false, validationError = errorMsg) }
+            withContext(Dispatchers.Main) { onDone(null, errorMsg) }
+            return@launch
+          }
+        val (skill, errors) = convertSkillMdToProto(
+          mdContent = mdContent,
+          builtIn = false,
+          selected = true,
+        )
+        if (errors.isNotEmpty() || skill == null) {
+          val errorMsg = errors.joinToString(", ")
+          _uiState.update { it.copy(validating = false, validationError = errorMsg) }
+          withContext(Dispatchers.Main) { onDone(null, errorMsg) }
+        } else {
+          addSkill(skill)
+          _uiState.update { it.copy(validating = false, validationError = null) }
+          withContext(Dispatchers.Main) { onDone(skill, null) }
+        }
+      } catch (e: Exception) {
+        val errorMsg = "Failed to import skill: ${e.message}"
+        _uiState.update { it.copy(validating = false, validationError = errorMsg) }
+        withContext(Dispatchers.Main) { onDone(null, errorMsg) }
+      }
+    }
   }
 }
 

@@ -58,7 +58,13 @@ enum class AgentActionName() {
   CALL_JS_SKILL,
   SKILL_PROGRESS,
   ASK_INFO,
+  REQUEST_PERMISSION,
 }
+
+class RequestPermissionAgentAction(
+  val permission: String,
+  val result: CompletableDeferred<Boolean> = CompletableDeferred(),
+) : AgentAction(name = AgentActionName.REQUEST_PERMISSION)
 
 data class SkillTryOutChip(
   val icon: ImageVector,

@@ -19,6 +19,7 @@ import android.content.Context
 import android.util.Log
 import com.phoneclaw.ai.common.AgentAction
 import com.phoneclaw.ai.common.AskInfoAgentAction
+import com.phoneclaw.ai.common.RequestPermissionAgentAction
 import com.phoneclaw.ai.common.CallJsAgentAction
 import com.phoneclaw.ai.common.CallJsSkillResult
 import com.phoneclaw.ai.common.CallJsSkillResultImage
@@ -251,6 +252,167 @@ class AgentTools @javax.inject.Inject constructor() : ToolSet {
           "parameters" to parameters,
           "result" to "failed",
         )
+      }
+    }
+  }
+
+  /** Read contacts from the phone. Permission must be granted before calling. */
+  @Tool(description = "Reads contacts from the phone. Requires READ_CONTACTS permission.")
+  fun readContacts(
+    @ToolParam(description = "Search query to filter contacts by name. Use empty string to get all contacts.")
+    query: String
+  ): Map<String, Any> {
+    return runBlocking(Dispatchers.Default) {
+      try {
+        val action = RequestPermissionAgentAction(android.Manifest.permission.READ_CONTACTS)
+        _actionChannel.send(action)
+        val granted = action.result.await()
+        if (!granted) {
+          return@runBlocking mapOf("error" to "READ_CONTACTS permission denied", "contacts" to emptyList<Any>(), "count" to 0)
+        }
+
+        val contacts = mutableListOf<Map<String, String>>()
+        val selection = if (query.isBlank()) null else "${android.provider.ContactsContract.Contacts.DISPLAY_NAME_PRIMARY} LIKE ?"
+        val selectionArgs = if (query.isBlank()) null else arrayOf("%$query%")
+        val cursor = context.contentResolver.query(
+          android.provider.ContactsContract.Contacts.CONTENT_URI,
+          arrayOf(
+            android.provider.ContactsContract.Contacts._ID,
+            android.provider.ContactsContract.Contacts.DISPLAY_NAME_PRIMARY,
+          ),
+          selection,
+          selectionArgs,
+          "${android.provider.ContactsContract.Contacts.DISPLAY_NAME_PRIMARY} ASC"
+        )
+        cursor?.use { c ->
+          val idCol = c.getColumnIndex(android.provider.ContactsContract.Contacts._ID)
+          val nameCol = c.getColumnIndex(android.provider.ContactsContract.Contacts.DISPLAY_NAME_PRIMARY)
+          while (c.moveToNext() && contacts.size < 20) {
+            val id = c.getString(idCol) ?: continue
+            val name = c.getString(nameCol) ?: continue
+            // Get phone numbers for this contact
+            val phones = mutableListOf<String>()
+            val phoneCursor = context.contentResolver.query(
+              android.provider.ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+              arrayOf(android.provider.ContactsContract.CommonDataKinds.Phone.NUMBER),
+              "${android.provider.ContactsContract.CommonDataKinds.Phone.CONTACT_ID} = ?",
+              arrayOf(id),
+              null
+            )
+            phoneCursor?.use { pc ->
+              val numCol = pc.getColumnIndex(android.provider.ContactsContract.CommonDataKinds.Phone.NUMBER)
+              while (pc.moveToNext()) {
+                pc.getString(numCol)?.let { phones.add(it) }
+              }
+            }
+            contacts.add(mapOf("name" to name, "phone" to phones.firstOrNull().orEmpty()))
+          }
+        }
+        mapOf("contacts" to contacts, "count" to contacts.size)
+      } catch (e: Exception) {
+        mapOf("error" to "Failed to read contacts: ${e.message}", "contacts" to emptyList<Any>(), "count" to 0)
+      }
+    }
+  }
+
+  /** Read calendar events from the phone. Permission must be granted before calling. */
+  @Tool(description = "Reads upcoming calendar events from the phone.")
+  fun readCalendar(
+    @ToolParam(description = "Number of days from today to look ahead (e.g. '7' for one week)")
+    daysAhead: String
+  ): Map<String, Any> {
+    return runBlocking(Dispatchers.Default) {
+      try {
+        val action = RequestPermissionAgentAction(android.Manifest.permission.READ_CALENDAR)
+        _actionChannel.send(action)
+        val granted = action.result.await()
+        if (!granted) {
+          return@runBlocking mapOf("error" to "READ_CALENDAR permission denied", "events" to emptyList<Any>())
+        }
+
+        val days = daysAhead.toIntOrNull()?.coerceIn(1, 30) ?: 7
+        val now = System.currentTimeMillis()
+        val end = now + (days.toLong() * 24 * 60 * 60 * 1000)
+        val sdf = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm", java.util.Locale.getDefault())
+
+        val events = mutableListOf<Map<String, String>>()
+        val cursor = context.contentResolver.query(
+          android.provider.CalendarContract.Events.CONTENT_URI,
+          arrayOf(
+            android.provider.CalendarContract.Events.TITLE,
+            android.provider.CalendarContract.Events.DTSTART,
+            android.provider.CalendarContract.Events.DTEND,
+            android.provider.CalendarContract.Events.EVENT_LOCATION,
+            android.provider.CalendarContract.Events.DESCRIPTION,
+          ),
+          "${android.provider.CalendarContract.Events.DTSTART} >= ? AND ${android.provider.CalendarContract.Events.DTSTART} <= ? AND ${android.provider.CalendarContract.Events.DELETED} = 0",
+          arrayOf(now.toString(), end.toString()),
+          "${android.provider.CalendarContract.Events.DTSTART} ASC"
+        )
+        cursor?.use { c ->
+          val titleCol = c.getColumnIndex(android.provider.CalendarContract.Events.TITLE)
+          val startCol = c.getColumnIndex(android.provider.CalendarContract.Events.DTSTART)
+          val endCol = c.getColumnIndex(android.provider.CalendarContract.Events.DTEND)
+          val locCol = c.getColumnIndex(android.provider.CalendarContract.Events.EVENT_LOCATION)
+          while (c.moveToNext() && events.size < 20) {
+            val event = mutableMapOf<String, String>()
+            event["title"] = c.getString(titleCol) ?: "Untitled"
+            val startMs = c.getLong(startCol)
+            val endMs = c.getLong(endCol)
+            event["start"] = sdf.format(java.util.Date(startMs))
+            event["end"] = sdf.format(java.util.Date(endMs))
+            val loc = c.getString(locCol)
+            if (!loc.isNullOrBlank()) event["location"] = loc
+            events.add(event)
+          }
+        }
+        mapOf("events" to events, "count" to events.size)
+      } catch (e: Exception) {
+        mapOf("error" to "Failed to read calendar: ${e.message}", "events" to emptyList<Any>())
+      }
+    }
+  }
+
+  /** Fetch text content from a web URL. */
+  @Tool(description = "Fetches the text content of a web page from a URL.")
+  fun fetchUrl(
+    @ToolParam(description = "The full URL to fetch (must start with http:// or https://)")
+    url: String
+  ): Map<String, Any> {
+    return runBlocking(Dispatchers.IO) {
+      try {
+        if (!url.startsWith("http://") && !url.startsWith("https://")) {
+          return@runBlocking mapOf("error" to "URL must start with http:// or https://")
+        }
+        _actionChannel.send(
+          SkillProgressAgentAction(
+            label = "Fetching URL: $url",
+            inProgress = true,
+            addItemTitle = "Fetch URL",
+            addItemDescription = url,
+          )
+        )
+        val connection = java.net.URL(url).openConnection() as java.net.HttpURLConnection
+        connection.connectTimeout = 10000
+        connection.readTimeout = 10000
+        connection.setRequestProperty("User-Agent", "Mozilla/5.0")
+        val responseCode = connection.responseCode
+        if (responseCode !in 200..299) {
+          return@runBlocking mapOf("error" to "HTTP $responseCode", "url" to url)
+        }
+        val html = connection.inputStream.bufferedReader().readText()
+        // Simple HTML to text: strip tags
+        val titleMatch = Regex("<title[^>]*>(.*?)</title>", RegexOption.IGNORE_CASE).find(html)
+        val title = titleMatch?.groupValues?.get(1)?.trim() ?: ""
+        val noScript = html.replace(Regex("<script[^>]*>.*?</script>", setOf(RegexOption.DOT_MATCHES_ALL, RegexOption.IGNORE_CASE)), " ")
+        val noStyle = noScript.replace(Regex("<style[^>]*>.*?</style>", setOf(RegexOption.DOT_MATCHES_ALL, RegexOption.IGNORE_CASE)), " ")
+        val text = noStyle.replace(Regex("<[^>]+>"), " ")
+          .replace(Regex("\\s+"), " ")
+          .trim()
+          .take(4000)
+        mapOf("title" to title, "content" to text, "url" to url)
+      } catch (e: Exception) {
+        mapOf("error" to "Failed to fetch URL: ${e.message}", "url" to url)
       }
     }
   }
