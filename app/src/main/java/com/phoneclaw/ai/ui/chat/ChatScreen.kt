@@ -68,6 +68,8 @@ fun ChatScreen(
     LaunchedEffect(Unit) { viewModel.preloadModel() }
     val currentModelForEffect by viewModel.currentModel.collectAsStateWithLifecycle()
     LaunchedEffect(currentModelForEffect) { if (currentModelForEffect != null) viewModel.preloadModel() }
+    val chatModeForEffect by viewModel.chatMode.collectAsStateWithLifecycle()
+    LaunchedEffect(chatModeForEffect) { viewModel.preloadModel() }
 
     val messages by viewModel.messages.collectAsStateWithLifecycle()
     val isStreaming by viewModel.isStreaming.collectAsStateWithLifecycle()

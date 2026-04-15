@@ -93,11 +93,10 @@ class ChatViewModel @Inject constructor(
         _messages.value = emptyList()
         _attachedImageBitmap.value = null
         _attachedImageUri.value = null
-        if (_modelInitialized && _initializedModelId == currentModel.value?.name) {
-            _modelInitState.value = ModelInitState.Ready
-        } else {
-            _modelInitState.value = ModelInitState.Idle
-        }
+        // Force model re-initialization on every mode switch so that tool-calling
+        // config (enabled in AGENT mode, disabled in CHAT/PROMPT_LAB) is applied.
+        _modelInitialized = false
+        _modelInitState.value = ModelInitState.Idle
     }
 
     fun attachImage(bitmap: Bitmap, uri: String) {
