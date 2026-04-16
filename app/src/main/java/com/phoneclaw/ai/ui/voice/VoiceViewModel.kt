@@ -176,26 +176,28 @@ class VoiceViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(voiceState = VoiceState.PROCESSING)
         _aiResponse.value = ""
 
-        val needsInit = !_modelInitialized || _initializedModelId != activeModel.name
-        if (needsInit) {
-            llmModelHelper.initialize(
-                context = context,
-                model = activeModel,
-                supportImage = false,
-                supportAudio = false,
-                onDone = { error ->
-                    if (error.isNotEmpty()) {
-                        _uiState.value = _uiState.value.copy(voiceState = VoiceState.IDLE, errorMessage = "Could not load model: $error")
-                        return@initialize
-                    }
-                    _modelInitialized = true
-                    _initializedModelId = activeModel.name
-                    runVoiceInference(activeModel, text)
-                },
-                coroutineScope = viewModelScope,
-            )
-        } else {
-            runVoiceInference(activeModel, text)
+        viewModelScope.launch {
+            val needsInit = !_modelInitialized || _initializedModelId != activeModel.name
+            if (needsInit) {
+                llmModelHelper.initialize(
+                    context = context,
+                    model = activeModel,
+                    supportImage = false,
+                    supportAudio = false,
+                    onDone = { error ->
+                        if (error.isNotEmpty()) {
+                            _uiState.value = _uiState.value.copy(voiceState = VoiceState.IDLE, errorMessage = "Could not load model: $error")
+                            return@initialize
+                        }
+                        _modelInitialized = true
+                        _initializedModelId = activeModel.name
+                        runVoiceInference(activeModel, text)
+                    },
+                    coroutineScope = viewModelScope,
+                )
+            } else {
+                runVoiceInference(activeModel, text)
+            }
         }
     }
 

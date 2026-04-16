@@ -120,28 +120,30 @@ class ChatViewModel @Inject constructor(
 
         _modelInitState.value = ModelInitState.Loading
 
-        val selectedSkills = skillManagerViewModel.getSelectedSkills()
-        val useTools = agentMode || selectedSkills.isNotEmpty()
+        viewModelScope.launch {
+            val selectedSkills = skillManagerViewModel.getSelectedSkills()
+            val useTools = agentMode || selectedSkills.isNotEmpty()
 
-        llmModelHelper.initialize(
-            context = context,
-            model = model,
-            supportImage = model.llmSupportImage,
-            supportAudio = model.llmSupportAudio,
-            onDone = { error ->
-                if (error.isNotEmpty()) {
-                    _modelInitState.value = ModelInitState.Error(error)
-                    return@initialize
-                }
-                _modelInitialized = true
-                _initializedModelId = model.name
-                _modelInitState.value = ModelInitState.Ready
-            },
-            systemInstruction = if (useTools) skillManagerViewModel.getSystemPrompt("You are a helpful AI assistant with access to tools.") else null,
-            tools = if (useTools) listOf(tool(agentTools)) else emptyList(),
-            enableConversationConstrainedDecoding = useTools,
-            coroutineScope = viewModelScope
-        )
+            llmModelHelper.initialize(
+                context = context,
+                model = model,
+                supportImage = model.llmSupportImage,
+                supportAudio = model.llmSupportAudio,
+                onDone = { error ->
+                    if (error.isNotEmpty()) {
+                        _modelInitState.value = ModelInitState.Error(error)
+                        return@initialize
+                    }
+                    _modelInitialized = true
+                    _initializedModelId = model.name
+                    _modelInitState.value = ModelInitState.Ready
+                },
+                systemInstruction = if (useTools) skillManagerViewModel.getSystemPrompt("You are a helpful AI assistant with access to tools.") else null,
+                tools = if (useTools) listOf(tool(agentTools)) else emptyList(),
+                enableConversationConstrainedDecoding = useTools,
+                coroutineScope = viewModelScope
+            )
+        }
     }
 
     private suspend fun startNewConversation() {
